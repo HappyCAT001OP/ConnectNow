@@ -1,6 +1,5 @@
 import { useUser } from '@clerk/nextjs';
 import { useCall } from '@stream-io/video-react-sdk';
-import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
@@ -11,8 +10,11 @@ interface Participant {
   username: string;
 }
 
-export default function HostParticipantsPanel() {
-  const { id: roomId } = useParams();
+interface HostParticipantsPanelProps {
+  roomId: string;
+}
+
+export default function HostParticipantsPanel({ roomId }: HostParticipantsPanelProps) {
   const call = useCall();
   const { user } = useUser();
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
