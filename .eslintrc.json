@@ -4,5 +4,10 @@
     "standard",
     "plugin:tailwindcss/recommended",
     "prettier"
+  ],
+  "ignorePatterns": [
+    "lib/generated/prisma/",
+    "prisma/generated/",
+    "*.generated.*"
   ]
 }

@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   output: 'standalone',
   experimental: {
     serverActions: true,
@@ -28,8 +29,5 @@ const nextConfig = {
     return config;
   },
 };
-// next.config.js
-module.exports = {
-  reactStrictMode: true,
-  // Do not set `output: 'standalone'` unless needed.
-};
+
+module.exports = nextConfig;
