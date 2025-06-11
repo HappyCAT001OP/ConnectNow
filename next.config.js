@@ -28,5 +28,8 @@ const nextConfig = {
     return config;
   },
 };
-
-module.exports = nextConfig;
+// next.config.js
+module.exports = {
+  reactStrictMode: true,
+  // Do not set `output: 'standalone'` unless needed.
+};
