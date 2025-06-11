@@ -1,15 +1,17 @@
 import { useUser } from '@clerk/nextjs';
 import { useCall } from '@stream-io/video-react-sdk';
 import dynamic from 'next/dynamic';
-import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
-export default function CodeShare() {
-  const { id: roomId } = useParams();
+type CodeShareProps = {
+  roomId: string;
+};
+
+const CodeShare = ({ roomId }: CodeShareProps) => {
   const { user } = useUser();
   const call = useCall();
   const [code, setCode] = useState('// Start coding here...');
@@ -159,4 +161,6 @@ export default function CodeShare() {
       </div>
     </div>
   );
-} 
+};
+
+export default CodeShare; 
