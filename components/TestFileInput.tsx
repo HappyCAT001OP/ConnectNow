@@ -1,3 +1,5 @@
+"use client";
+
 export default function TestFileInput() {
   return (
     <div style={{ padding: 40 }}>
