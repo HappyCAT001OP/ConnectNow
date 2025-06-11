@@ -1,3 +1,5 @@
+"use client";
+
 import { Excalidraw } from '@excalidraw/excalidraw';
 
 export default function TestWhiteboard() {
