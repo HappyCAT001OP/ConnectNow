@@ -4,9 +4,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 const f = createUploadthing();
 
 // Helper to get Clerk userId
-const getUser = () => {
-  return auth();
-};
+const getUser = () => auth();
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
