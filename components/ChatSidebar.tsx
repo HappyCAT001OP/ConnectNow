@@ -1,3 +1,4 @@
+import { useUploadThing } from "@/utils/uploadthing";
 import { useUser } from '@clerk/nextjs';
 import { useCall } from '@stream-io/video-react-sdk';
 import { useParams } from 'next/navigation';
@@ -30,6 +31,38 @@ export default function ChatSidebar() {
   const userId = user?.id || 'unknown';
   const username = user?.username || user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User';
   const hostId = call?.state?.createdBy?.id;
+
+  const { startUpload } = useUploadThing("messageFile", {
+    onClientUploadComplete: (res) => {
+      console.log("UploadThing client complete:", res);
+      if (res && res.length > 0) {
+        const { fileUrl, fileName } = res[0].serverData;
+        // Store file metadata in Neon DB (if needed, otherwise handle directly)
+        fetch('/api/files', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: fileUrl,
+            name: fileName,
+            userId: userId,
+          }),
+        })
+          .then(res => res.json())
+          .then(fileData => {
+            sendMessage({ fileUrl, fileName, fileId: fileData.id });
+            console.log("File metadata stored and chat message sent.");
+          })
+          .catch(error => {
+            console.error("Failed to store file metadata:", error);
+            alert('Failed to store file metadata!');
+          });
+      }
+    },
+    onUploadError: (error: Error) => {
+      alert(`ERROR! ${error.message}`);
+      console.error("UploadThing error:", error);
+    },
+  });
 
   useEffect(() => {
     if (!roomId) return;
@@ -75,40 +108,15 @@ export default function ChatSidebar() {
     setInput('');
   };
 
-  // Minimal, robust file upload handler
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Upload to file.io (demo purpose)
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const uploadRes = await fetch('https://file.io', {
-      method: 'POST',
-      body: formData,
-    });
-    const uploadData = await uploadRes.json();
-
-    if (!uploadData.success) {
-      alert('File upload failed!');
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) {
+      console.log("No file selected.");
       return;
     }
 
-    // Store file metadata in Neon DB
-    const fileRes = await fetch('/api/files', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url: uploadData.link,
-        name: file.name,
-        userId: userId,
-      }),
-    });
-    const fileData = await fileRes.json();
-
-    // Send a chat message with the fileId
-    sendMessage({ fileUrl: uploadData.link, fileName: file.name, fileId: fileData.id });
+    console.log("Attempting to upload file with UploadThing:", selectedFile.name);
+    await startUpload([selectedFile]);
   };
 
   return (
