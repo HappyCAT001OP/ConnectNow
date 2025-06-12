@@ -5,7 +5,6 @@ const f = createUploadthing();
 
 // Helper to get Clerk userId
 const getUser = () => {
-  console.log("UPLOADTHING_SECRET:", process.env.UPLOADTHING_SECRET);
   return auth();
 };
 
