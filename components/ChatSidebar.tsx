@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
-import { useUploadThing } from "../utils/uploadthing";
+import { useUploadThing } from "./uploadthing";
 
 // Define ChatMessage type
 interface ChatMessage {
