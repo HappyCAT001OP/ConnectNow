@@ -1,10 +1,10 @@
-import { useUploadThing } from "@/utils/uploadthing";
 import { useUser } from '@clerk/nextjs';
 import { useCall } from '@stream-io/video-react-sdk';
 import { useParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
+import { useUploadThing } from "../utils/uploadthing";
 
 // Define ChatMessage type
 interface ChatMessage {
