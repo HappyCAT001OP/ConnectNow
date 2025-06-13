@@ -30,6 +30,10 @@ export const ourFileRouter = {
     video: { maxFileSize: "16MB", maxFileCount: 1 },
     audio: { maxFileSize: "16MB", maxFileCount: 1 },
     text: { maxFileSize: "4MB", maxFileCount: 1 },
+    pdf: { maxFileSize: "10MB", maxFileCount: 1 }, // Allow PDF files
+    word: { maxFileSize: "10MB", maxFileCount: 1 }, // Allow Word documents (.doc, .docx)
+    excel: { maxFileSize: "10MB", maxFileCount: 1 }, // Allow Excel spreadsheets (.xls, .xlsx)
+    csv: { maxFileSize: "4MB", maxFileCount: 1 }, // Allow CSV files
   })
     .middleware(async ({ req }) => {
       const user = await getUser();
