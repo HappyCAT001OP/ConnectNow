@@ -46,8 +46,10 @@ const MeetingRoom = () => {
   const callingState = useCallCallingState();
 
   const { user } = useUser();
+    const [showDetails, setShowDetails] = useState(false); // New state for the details panel
+  const isHost = user?.id === /* logic to determine host, e.g., call.creatorId or first participant */ roomId; // Replace with real host logic
 
-  // Display Meeting ID and Copy Button
+    // Display Meeting ID and Copy Button
   const meetingIdDisplay = (
     <div className="bg-zinc-900 text-white p-2 border-b border-zinc-800 flex items-center justify-between">
       <span className="font-semibold">Meeting ID: {roomId}</span>
@@ -62,8 +64,7 @@ const MeetingRoom = () => {
       </button>
     </div>
   );
-  const [showDetails, setShowDetails] = useState(false); // New state for the details panel
-  const isHost = user?.id === /* logic to determine host, e.g., call.creatorId or first participant */ roomId; // Replace with real host logic
+
 
   if (callingState !== CallingState.JOINED) return <Loader />;
 
@@ -166,9 +167,6 @@ const MeetingRoom = () => {
             {!isPersonalRoom && <EndCallButton />}
           </div>
         </div>
-        {showChat && (
-          
-        )}
         {showChat && <ChatSidebar />}
       </div>
     </div>
