@@ -208,8 +208,20 @@ export default function ChatSidebar() {
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Type a message..."
-          className="p-2 rounded bg-zinc-800 text-white text-sm border border-zinc-700"
+          className="p-2 rounded bg-zinc-800 text-white text-sm border border-zinc-700 flex-1"
         />
+         <div className="flex items-center gap-2 mt-1">
+           <span className="text-sm text-gray-400">Meeting ID: {roomId}</span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(roomId);
+                alert('Meeting ID copied to clipboard!'); // Or use a toast/notification
+              }}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+            >
+              Copy ID
+            </button>
+         </div>
         <div className="flex gap-2 items-center mt-1">
           <label
             style={{ border: '2px solid transparent', zIndex: 1000, position: 'relative' }}
