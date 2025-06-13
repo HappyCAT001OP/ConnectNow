@@ -14,7 +14,7 @@ import { useState } from 'react';
 import ChatSidebar from './ChatSidebar';
 import CodeShare from './CodeShare';
 import Whiteboard from './Whiteboard';
-
+import { Info } from 'lucide-react'; // Import the Info icon
 import { cn } from '@/lib/utils';
 import { useUser } from '@clerk/nextjs';
 import EndCallButton from './EndCallButton';
@@ -80,19 +80,10 @@ const MeetingRoom = () => {
 
   return (
     <div className="flex h-screen w-full flex-col bg-black">
+      {meetingIdDisplay}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 flex-col">
           <div className="flex justify-between items-center px-6 py-2 bg-zinc-900 border-b border-zinc-800">
-            <div className="flex gap-2">
-              {/* Add the meeting ID and copy button here */} 
-            </div>
-            <button
-              onClick={() => setShowChat((prev) => !prev)}
-              className="px-4 py-2 rounded bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition-colors"
-            >
-              {showChat ? 'Close Chat' : 'Chat'}
-            </button>
-          </div
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab('video')}
@@ -113,6 +104,7 @@ const MeetingRoom = () => {
                 Code Share
               </button>
             </div>
+
             <button
               onClick={() => setShowChat((prev) => !prev)}
               className="px-4 py-2 rounded bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition-colors"
@@ -175,18 +167,7 @@ const MeetingRoom = () => {
           </div>
         </div>
         {showChat && (
-          <div className="bg-zinc-900 text-white p-2 border-b border-zinc-800 flex items-center justify-between">
-            <span className="font-semibold">Meeting ID: {roomId}</span>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(roomId);
-                alert('Meeting ID copied to clipboard!'); // Or use a toast/notification
-              }}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
-            >
-              Copy ID
-            </button>
-          </div>
+          
         )}
         {showChat && <ChatSidebar />}
       </div>
