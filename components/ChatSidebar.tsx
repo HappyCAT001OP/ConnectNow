@@ -130,12 +130,21 @@ export default function ChatSidebar() {
           throw new Error(`Cloudinary upload returned non-JSON response. Raw response: ${responseText}`);
       }
 
+      console.log("Processing Cloudinary successful response.");
+      console.log("fileData from Cloudinary:", fileData);
+      console.log("selectedFile object:", selectedFile);
+
       const fileUrl = fileData.secure_url; // Use secure_url for HTTPS
+      const fileName = fileData.original_filename || selectedFile.name;
+      console.log("Determined fileName:", fileName);
+
       // Cloudinary provides a public_id, you can use this or generate your own fileId
       const fileId = fileData.public_id; // Using Cloudinary's public_id as fileId
 
       // Store file metadata in your database via the /api/files route
       console.log("Storing file metadata in database...");
+      console.log("Payload for /api/files:", { url: fileUrl, name: fileName, userId: userId, fileId: fileId });
+
       const dbResponse = await fetch('/api/files', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
