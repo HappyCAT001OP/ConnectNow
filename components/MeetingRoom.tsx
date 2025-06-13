@@ -46,7 +46,7 @@ const MeetingRoom = () => {
   const callingState = useCallCallingState();
 
   const { user } = useUser();
-    const [showDetails, setShowDetails] = useState(false); // New state for the details panel
+  const [showDetails, setShowDetails] = useState(false); // New state for the details panel
   const isHost = user?.id === /* logic to determine host, e.g., call.creatorId or first participant */ roomId; // Replace with real host logic
 
     // Display Meeting ID and Copy Button
@@ -64,6 +64,7 @@ const MeetingRoom = () => {
       </button>
     </div>
   );
+
 
 
   if (callingState !== CallingState.JOINED) return <Loader />;
@@ -112,12 +113,6 @@ const MeetingRoom = () => {
             >
               {showChat ? 'Close Chat' : 'Chat'}
             </button>
-             <button
-              onClick={() => setShowDetails((prev) => !prev)}
-              className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
-            >
-              Details
-            </button>
           </div>
           <div className="relative flex size-full items-center justify-center">
             <div className="flex size-full max-w-[1000px] items-center">
@@ -125,6 +120,12 @@ const MeetingRoom = () => {
               {activeTab === 'whiteboard' && <Whiteboard roomId={roomId} />}
               {activeTab === 'codeshare' && <CodeShare roomId={roomId} />}
             </div>
+            {/* Meeting Details Panel (Sidebar) */}
+            {showDetails && (
+              <div className="absolute top-0 right-0 h-full w-[300px] bg-zinc-900 border-l border-zinc-800 p-4 overflow-y-auto">
+                <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} />
+              </div>
+            )}
             <div
               className={cn('h-[calc(100vh-86px)] ml-2', {
                 'block': showParticipants,
@@ -163,6 +164,12 @@ const MeetingRoom = () => {
               <div className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]">
                 <Users size={30} className="text-white" />
               </div>
+            </button>
+               <button
+              onClick={() => setShowDetails((prev) => !prev)}
+              className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
+            >
+              Details
             </button>
             {!isPersonalRoom && <EndCallButton />}
           </div>
