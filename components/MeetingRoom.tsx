@@ -140,6 +140,20 @@ const MeetingRoom = () => {
             {!isPersonalRoom && <EndCallButton />}
           </div>
         </div>
+        {showChat && (
+          <div className="bg-zinc-900 text-white p-2 border-b border-zinc-800 flex items-center justify-between">
+            <span className="font-semibold">Meeting ID: {roomId}</span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(roomId);
+                alert('Meeting ID copied to clipboard!'); // Or use a toast/notification
+              }}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+            >
+              Copy ID
+            </button>
+          </div>
+        )}
         {showChat && <ChatSidebar />}
       </div>
     </div>
