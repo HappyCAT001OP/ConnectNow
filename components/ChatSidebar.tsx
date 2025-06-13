@@ -4,7 +4,6 @@ import { useParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
-import { useUploadThing } from "./uploadthing";
 
 // Define ChatMessage type
 interface ChatMessage {
@@ -32,37 +31,7 @@ export default function ChatSidebar() {
   const username = user?.username || user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User';
   const hostId = call?.state?.createdBy?.id;
 
-  const { startUpload } = useUploadThing("messageFile", {
-    onClientUploadComplete: (res) => {
-      console.log("UploadThing client complete:", res);
-      if (res && res.length > 0) {
-        const { fileUrl, fileName } = res[0].serverData;
-        // Store file metadata in Neon DB (if needed, otherwise handle directly)
-        fetch('/api/files', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: fileUrl,
-            name: fileName,
-            userId: userId,
-          }),
-        })
-          .then(res => res.json())
-          .then(fileData => {
-            sendMessage({ fileUrl, fileName, fileId: fileData.id });
-            console.log("File metadata stored and chat message sent.");
-          })
-          .catch(error => {
-            console.error("Failed to store file metadata:", error);
-            alert('Failed to store file metadata!');
-          });
-      }
-    },
-    onUploadError: (error: Error) => {
-      alert(`ERROR! ${error.message}`);
-      console.error("UploadThing error:", error);
-    },
-  });
+  // Removed Uploadthing hook
 
   useEffect(() => {
     if (!roomId) return;
@@ -113,10 +82,72 @@ export default function ChatSidebar() {
     if (!selectedFile) {
       console.log("No file selected.");
       return;
+    console.log("File selected for upload:", selectedFile.name);
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      alert("Cloudinary configuration missing. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET environment variables.");
+      console.error("Cloudinary configuration missing.");
+      return;
     }
 
-    console.log("Attempting to upload file with UploadThing:", selectedFile.name);
-    await startUpload([selectedFile]);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('upload_preset', uploadPreset);
+
+    try {
+      console.log("Attempting to upload file to Cloudinary...");
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Cloudinary upload failed:", response.status, errorData);
+        throw new Error(`Cloudinary upload failed: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const fileData = await response.json();
+      console.log("Cloudinary upload successful:", fileData);
+
+      const fileUrl = fileData.secure_url; // Use secure_url for HTTPS
+      const fileName = fileData.original_filename || selectedFile.name;
+      // Cloudinary provides a public_id, you can use this or generate your own fileId
+      const fileId = fileData.public_id; // Using Cloudinary's public_id as fileId
+
+      // Store file metadata in your database via the /api/files route
+      console.log("Storing file metadata in database...");
+      const dbResponse = await fetch('/api/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: fileUrl,
+          name: fileName,
+          userId: userId,
+          fileId: fileId, // Pass Cloudinary's public_id or a generated ID
+        }),
+      });
+
+      if (!dbResponse.ok) {
+         const dbErrorData = await dbResponse.json();
+         console.error("Failed to store file metadata:", dbResponse.status, dbErrorData);
+         throw new Error(`Failed to store file metadata: ${dbErrorData.message || dbResponse.statusText}`);
+      }
+
+      const dbFileData = await dbResponse.json();
+      console.log("File metadata stored:", dbFileData);
+
+      // Send message with file details
+      sendMessage({ fileUrl, fileName, fileId: dbFileData.id }); // Assuming /api/files returns an id
+      console.log("File chat message sent.");
+
+    } catch (error: any) {
+      console.error("File upload process failed:", error);
+      alert(`File upload failed: ${error.message}`);
+    }
   };
 
   return (
