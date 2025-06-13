@@ -14,7 +14,6 @@ import { useState } from 'react';
 import ChatSidebar from './ChatSidebar';
 import CodeShare from './CodeShare';
 import Whiteboard from './Whiteboard';
-import { Info } from 'lucide-react'; // Import the Info icon
 import { cn } from '@/lib/utils';
 import { useUser } from '@clerk/nextjs';
 import EndCallButton from './EndCallButton';
@@ -43,7 +42,7 @@ const MeetingRoom = () => {
   const [showChat, setShowChat] = useState(false);
   const [showDetails, setShowDetails] = useState(false); // New state for the details panel
 
-  // for more detail about types of CallingState see: https://getstream.io/video/docs/react/ui-cookbook/ringing-call/#incoming-call-panel
+  // for more detail about types of CallingState see: https://getstream-io/video-react-sdk/calling-state
   const callingState = useCallCallingState();
 
   const { user } = useUser();
@@ -51,21 +50,7 @@ const MeetingRoom = () => {
   const meetingStartTime = new Date().toLocaleTimeString();
   const isHost = user?.id === /* logic to determine host, e.g., call.creatorId or first participant */ roomId; // Replace with real host logic
 
-  // Display Meeting ID and Copy Button
-  const meetingIdDisplay = (
-    <div className="bg-zinc-900 text-white p-2 border-b border-zinc-800 flex items-center justify-between">
-      <span className="font-semibold">Meeting ID: {roomId}</span>
-      <button
-        onClick={() => {
-          navigator.clipboard.writeText(roomId);
-          alert('Meeting ID copied to clipboard!'); // Or use a toast/notification
-        }}
-        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
-      >
-        Copy ID
-      </button>
-    </div>
-  );
+
 
   if (callingState !== CallingState.JOINED) return <Loader />;
 
@@ -82,7 +67,7 @@ const MeetingRoom = () => {
 
   return (
     <div className="flex h-screen w-full flex-col bg-black">
-      {meetingIdDisplay}
+
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 flex-col">
           <div className="flex justify-between items-center px-6 py-2 bg-zinc-900 border-b border-zinc-800">
