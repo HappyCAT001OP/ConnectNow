@@ -82,6 +82,7 @@ export default function ChatSidebar() {
     if (!selectedFile) {
       console.log("No file selected.");
       return;
+    }
     console.log("File selected for upload:", selectedFile.name);
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
