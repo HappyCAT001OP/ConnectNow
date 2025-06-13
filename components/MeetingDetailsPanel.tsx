@@ -6,9 +6,16 @@ import React from 'react';
 interface MeetingDetailsPanelProps {
   roomId: string;
   onClose?: () => void; // Optional function to close the panel (e.g., for a modal)
+  hostName: string;
+  meetingStartTime: string;
 }
 
 const MeetingDetailsPanel: React.FC<MeetingDetailsPanelProps> = ({ roomId, onClose }) => {
+    // Replace with real host name and meeting start time
+    const hostName = "[Retrieved Host Name]";  // Replace with the actual host's name
+    const meetingStartTime = new Date().toLocaleTimeString(); // Replace with actual start time
+
+
   return (
     <div className="bg-zinc-800 text-white p-4 rounded-md shadow-md">
       <div className="flex items-center justify-between mb-2">
@@ -20,8 +27,16 @@ const MeetingDetailsPanel: React.FC<MeetingDetailsPanelProps> = ({ roomId, onClo
           </button>
         )}
       </div>
-      <div className="flex items-center gap-2">
-        <span>Meeting ID: {roomId}</span>
+      <div className="flex flex-col gap-2">
+        <div>
+          <span className="font-semibold">Meeting ID:</span> {roomId}
+        </div>
+        <div>
+          <span className="font-semibold">Host:</span> {hostName}
+        </div>
+        <div>
+          <span className="font-semibold">Started:</span> {meetingStartTime}
+        </div>
         <button
           onClick={() => {
             navigator.clipboard.writeText(roomId);
