@@ -20,6 +20,7 @@ import { useUser } from '@clerk/nextjs';
 import EndCallButton from './EndCallButton';
 import HostParticipantsPanel from './HostParticipantsPanel';
 import Loader from './Loader';
+import MeetingDetailsPanel from './MeetingDetailsPanel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +46,23 @@ const MeetingRoom = () => {
   const callingState = useCallCallingState();
 
   const { user } = useUser();
+
+  // Display Meeting ID and Copy Button
+  const meetingIdDisplay = (
+    <div className="bg-zinc-900 text-white p-2 border-b border-zinc-800 flex items-center justify-between">
+      <span className="font-semibold">Meeting ID: {roomId}</span>
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(roomId);
+          alert('Meeting ID copied to clipboard!'); // Or use a toast/notification
+        }}
+        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+      >
+        Copy ID
+      </button>
+    </div>
+  );
+  const [showDetails, setShowDetails] = useState(false); // New state for the details panel
   const isHost = user?.id === /* logic to determine host, e.g., call.creatorId or first participant */ roomId; // Replace with real host logic
 
   if (callingState !== CallingState.JOINED) return <Loader />;
@@ -65,6 +83,16 @@ const MeetingRoom = () => {
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 flex-col">
           <div className="flex justify-between items-center px-6 py-2 bg-zinc-900 border-b border-zinc-800">
+            <div className="flex gap-2">
+              {/* Add the meeting ID and copy button here */} 
+            </div>
+            <button
+              onClick={() => setShowChat((prev) => !prev)}
+              className="px-4 py-2 rounded bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition-colors"
+            >
+              {showChat ? 'Close Chat' : 'Chat'}
+            </button>
+          </div
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab('video')}
@@ -90,6 +118,12 @@ const MeetingRoom = () => {
               className="px-4 py-2 rounded bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition-colors"
             >
               {showChat ? 'Close Chat' : 'Chat'}
+            </button>
+             <button
+              onClick={() => setShowDetails((prev) => !prev)}
+              className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
+            >
+              Details
             </button>
           </div>
           <div className="relative flex size-full items-center justify-center">

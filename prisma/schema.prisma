@@ -23,11 +23,17 @@ model User {
   createdAt DateTime @default(now())
 }
 
+
+model Meeting {
+  id        String   @id @unique // Using meeting ID (Stream Call ID) as unique identifier
+  password  String? // Nullable password field
+  createdAt DateTime @default(now())
+}
+
 model Message {
   id        String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id])
   userId    String
-  text      String
   file      File?    @relation(fields: [fileId], references: [id])
   fileId    String?
   createdAt DateTime @default(now())
