@@ -67,8 +67,6 @@ const MeetingRoom = () => {
     </div>
   );
 
-
-
   if (callingState !== CallingState.JOINED) return <Loader />;
 
   const CallLayout = () => {
@@ -113,12 +111,6 @@ const MeetingRoom = () => {
               className="px-4 py-2 rounded bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition-colors"
             >
               {showChat ? 'Close Chat' : 'Chat'}
-            </button>
-            <button
-              onClick={() => setShowDetails((prev) => !prev)}
-              className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
-            >
-              Details
             </button>
           </div>
           <div className="relative flex size-full items-center justify-center">
@@ -167,10 +159,16 @@ const MeetingRoom = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             <CallStatsButton />
-            <button> onClick={() => setShowParticipants((prev) => !prev)}>
+            <button onClick={() => setShowParticipants((prev) => !prev)}>
               <div className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]">
                 <Users size={30} className="text-white" />
               </div>
+            </button>
+            <button
+              onClick={() => setShowDetails((prev) => !prev)}
+              className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
+            >
+              Details
             </button>
             {!isPersonalRoom && <EndCallButton />}
           </div>
