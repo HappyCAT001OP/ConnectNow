@@ -10,11 +10,7 @@ interface MeetingDetailsPanelProps {
   meetingStartTime: string;
 }
 
-const MeetingDetailsPanel: React.FC<MeetingDetailsPanelProps> = ({ roomId, onClose }) => {
-    // Replace with real host name and meeting start time
-    const hostName = "[Retrieved Host Name]";  // Replace with the actual host's name
-    const meetingStartTime = new Date().toLocaleTimeString(); // Replace with actual start time
-
+const MeetingDetailsPanel: React.FC<MeetingDetailsPanelProps> = ({ roomId, onClose, hostName, meetingStartTime }) => {
 
   return (
     <div className="bg-zinc-800 text-white p-4 rounded-md shadow-md">
@@ -32,10 +28,10 @@ const MeetingDetailsPanel: React.FC<MeetingDetailsPanelProps> = ({ roomId, onClo
           <span className="font-semibold">Meeting ID:</span> {roomId}
         </div>
         <div>
-          <span className="font-semibold">Host:</span> {hostName}
+          <span className="font-semibold">Host:</span> {hostName || "Unknown"}
         </div>
         <div>
-          <span className="font-semibold">Started:</span> {meetingStartTime}
+          <span className="font-semibold">Started:</span> {meetingStartTime || "Unknown"}
         </div>
         <button
           onClick={() => {

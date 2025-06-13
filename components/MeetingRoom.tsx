@@ -29,7 +29,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
-
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
 
 const MeetingRoom = () => {
@@ -42,17 +41,17 @@ const MeetingRoom = () => {
   const { useCallCallingState } = useCallStateHooks();
   const [activeTab, setActiveTab] = useState<'video' | 'whiteboard' | 'codeshare'>('video');
   const [showChat, setShowChat] = useState(false);
-    const [showDetails, setShowDetails] = useState(false); // New state for the details panel
+  const [showDetails, setShowDetails] = useState(false); // New state for the details panel
 
   // for more detail about types of CallingState see: https://getstream.io/video/docs/react/ui-cookbook/ringing-call/#incoming-call-panel
   const callingState = useCallCallingState();
 
   const { user } = useUser();
-   const hostName = user?.username || 'Unknown Host';
-      const meetingStartTime = new Date().toLocaleTimeString();
+  const hostName = user?.username || 'Unknown Host';
+  const meetingStartTime = new Date().toLocaleTimeString();
   const isHost = user?.id === /* logic to determine host, e.g., call.creatorId or first participant */ roomId; // Replace with real host logic
 
-    // Display Meeting ID and Copy Button
+  // Display Meeting ID and Copy Button
   const meetingIdDisplay = (
     <div className="bg-zinc-900 text-white p-2 border-b border-zinc-800 flex items-center justify-between">
       <span className="font-semibold">Meeting ID: {roomId}</span>
@@ -76,6 +75,7 @@ const MeetingRoom = () => {
     switch (layout) {
       case 'grid':
         return <PaginatedGridLayout />;
+      case 'speaker-right':
         return <SpeakerLayout participantsBarPosition="left" />;
       default:
         return <SpeakerLayout participantsBarPosition="right" />;
@@ -108,12 +108,17 @@ const MeetingRoom = () => {
                 Code Share
               </button>
             </div>
-
             <button
               onClick={() => setShowChat((prev) => !prev)}
               className="px-4 py-2 rounded bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition-colors"
             >
               {showChat ? 'Close Chat' : 'Chat'}
+            </button>
+            <button
+              onClick={() => setShowDetails((prev) => !prev)}
+              className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
+            >
+              Details
             </button>
           </div>
           <div className="relative flex size-full items-center justify-center">
@@ -125,7 +130,7 @@ const MeetingRoom = () => {
             {/* Meeting Details Panel (Sidebar) */}
             {showDetails && (
               <div className="absolute top-0 right-0 h-full w-[300px] bg-zinc-900 border-l border-zinc-800 p-4 overflow-y-auto">
-                <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} hostName={hostName} meetingStartTime={meetingStartTime}/>
+                <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} hostName={hostName} meetingStartTime={meetingStartTime} />
               </div>
             )}
             <div
@@ -135,6 +140,7 @@ const MeetingRoom = () => {
               })}
             >
               <CallParticipantsList onClose={() => setShowParticipants(false)} />
+              {isHost && <HostParticipantsPanel roomId={roomId} />}
             </div>
           </div>
           <div className="fixed bottom-0 flex w-full items-center justify-center gap-5">
@@ -161,16 +167,10 @@ const MeetingRoom = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             <CallStatsButton />
-            <button onClick={() => setShowParticipants((prev) => !prev)}>
+            <button> onClick={() => setShowParticipants((prev) => !prev)}>
               <div className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]">
                 <Users size={30} className="text-white" />
               </div>
-            </button>
-               <button
-              onClick={() => setShowDetails((prev) => !prev)}
-              className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
-            >
-              Details
             </button>
             {!isPersonalRoom && <EndCallButton />}
           </div>
