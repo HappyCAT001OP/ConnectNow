@@ -105,17 +105,32 @@ export default function ChatSidebar() {
         body: formData,
       });
 
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Cloudinary upload failed:", response.status, errorData);
-        throw new Error(`Cloudinary upload failed: ${errorData.error?.message || response.statusText}`);
+        let errorDetails = response.statusText;
+        try {
+          const errorData = await response.json();
+          errorDetails = errorData.error?.message || JSON.stringify(errorData);
+        } catch (jsonError) {
+           const responseText = await response.text();
+           errorDetails = `Status: ${response.status}, Raw Response: ${responseText}`;
+           console.error("Failed to parse Cloudinary error response as JSON:", jsonError, "Raw response text:", responseText);
+        }
+        console.error("Cloudinary upload failed:", response.status, errorDetails);
+        throw new Error(`Cloudinary upload failed: ${errorDetails}`);
       }
 
-      const fileData = await response.json();
-      console.log("Cloudinary upload successful:", fileData);
+      let fileData;
+      try {
+         fileData = await response.json();
+         console.log("Cloudinary upload successful:", fileData);
+      } catch (jsonError) {
+          const responseText = await response.text();
+          console.error("Failed to parse Cloudinary success response as JSON:", jsonError, "Raw response text:", responseText);
+          throw new Error(`Cloudinary upload returned non-JSON response. Raw response: ${responseText}`);
+      }
 
       const fileUrl = fileData.secure_url; // Use secure_url for HTTPS
-      const fileName = fileData.original_filename || selectedFile.name;
       // Cloudinary provides a public_id, you can use this or generate your own fileId
       const fileId = fileData.public_id; // Using Cloudinary's public_id as fileId
 
