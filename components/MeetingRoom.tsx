@@ -93,7 +93,7 @@ const MeetingRoom = () => {
             </div>
             <button
               onClick={() => setShowChat((prev) => !prev)}
-              className="px-4 py-2 rounded bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 rounded bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition-colors z-50"
             >
               {showChat ? 'Close Chat' : 'Chat'}
             </button>
@@ -120,7 +120,7 @@ const MeetingRoom = () => {
               {isHost && <HostParticipantsPanel roomId={roomId} />}
             </div>
           </div>
-          <div className="fixed bottom-0 flex w-full items-center justify-center gap-5">
+          <div className="fixed bottom-0 flex w-full items-center justify-center gap-5 bg-black bg-opacity-80 py-3 z-40">
             <CallControls onLeave={() => router.push(`/`)} />
             <DropdownMenu>
               <div className="flex items-center">
@@ -144,13 +144,13 @@ const MeetingRoom = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             <CallStatsButton />
-               <button
+            <button
               onClick={() => setShowDetails((prev) => !prev)}
               className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
             >
               Details
             </button>
-             {!isPersonalRoom && <EndCallButton />}
+            {!isPersonalRoom && <EndCallButton />}
             <button onClick={() => setShowParticipants((prev) => !prev)}>
               <div className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]">
                 <Users size={30} className="text-white" />
@@ -158,7 +158,11 @@ const MeetingRoom = () => {
             </button>
           </div>
         </div>
-        {showChat && <ChatSidebar />}
+        {showChat && (
+          <div className="relative h-screen">
+            <ChatSidebar />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -180,7 +180,7 @@ export default function ChatSidebar() {
       <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between">
         <h2 className="font-bold text-lg tracking-wide m-0 bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Chat</h2>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 bg-zinc-900">
+      <div className="flex-1 overflow-y-auto p-4 bg-zinc-900 pb-16">
         {messages.map((msg, idx) => (
           <div key={msg.id} className={`mb-4 flex items-start gap-2 rounded-lg p-2 ${msg.userId === userId ? 'bg-zinc-800' : ''} transition-opacity`}>
             <div className={`w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-base ${msg.userId === hostId ? 'ring-2 ring-green-400' : ''}`}>
@@ -203,29 +203,27 @@ export default function ChatSidebar() {
           </div>
         ))}
       </div>
-      <form className="flex flex-col gap-2 p-4 border-t border-zinc-800 bg-zinc-950" onSubmit={e => { e.preventDefault(); if (input.trim()) sendMessage({ text: input }); }}>
+      <form className="flex flex-col gap-2 p-4 border-t border-zinc-800 bg-zinc-950 sticky bottom-0 z-50" onSubmit={e => { e.preventDefault(); if (input.trim()) sendMessage({ text: input }); }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Type a message..."
           className="p-2 rounded bg-zinc-800 text-white text-sm border border-zinc-700 flex-1"
         />
-         <div className="flex items-center gap-2 mt-1">
-        /
+        <div className="flex items-center gap-2 mt-1">
           <label
-            style={{ border: '2px solid transparent', zIndex: 1000, position: 'relative' }}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer text-sm font-semibold transition-colors flex items-center"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded cursor-pointer text-sm font-semibold transition-colors flex items-center"
           >
             <input
               type="file"
               onChange={handleFile}
               className="hidden"
             />
-            <span className="ml-1">📎 Attach file</span>
+            <span>Attach file</span>
           </label>
           <button
             type="submit"
-            className="bg-gradient-to-r from-blue-400 to-green-400 text-white border-none rounded px-4 py-2 font-semibold text-sm shadow transition-transform hover:scale-105"
+            className="bg-gradient-to-r from-blue-400 to-green-400 text-white border-none rounded px-3 py-1.5 font-semibold text-sm shadow transition-transform hover:scale-105 flex-1"
           >
             Send
           </button>
@@ -233,4 +231,4 @@ export default function ChatSidebar() {
       </form>
     </aside>
   );
-} 
+}
