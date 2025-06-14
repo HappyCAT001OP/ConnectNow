@@ -26,6 +26,8 @@ export default function ChatSidebar() {
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const yarrayRef = useRef<Y.Array<any> | null>(null);
+  const dropRef = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const userId = user?.id || 'unknown';
   const username = user?.username || user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User';
@@ -181,12 +183,50 @@ export default function ChatSidebar() {
     }
   };
 
+  // Drag-and-drop handlers
+  useEffect(() => {
+    const dropArea = dropRef.current;
+    if (!dropArea) return;
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+    };
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+    };
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        // Reuse handleFile logic
+        const inputEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+        handleFile(inputEvent);
+      }
+    };
+    dropArea.addEventListener('dragover', handleDragOver);
+    dropArea.addEventListener('dragleave', handleDragLeave);
+    dropArea.addEventListener('drop', handleDrop);
+    return () => {
+      dropArea.removeEventListener('dragover', handleDragOver);
+      dropArea.removeEventListener('dragleave', handleDragLeave);
+      dropArea.removeEventListener('drop', handleDrop);
+    };
+  }, []);
+
   return (
-    <aside className="w-[340px] bg-zinc-900 text-white h-screen border-l border-zinc-800 flex flex-col font-sans">
+    <aside ref={dropRef} className={`w-[340px] bg-zinc-900 text-white h-screen border-l border-zinc-800 flex flex-col font-sans ${isDragging ? 'ring-4 ring-blue-400' : ''}`}>
       <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between">
         <h2 className="font-bold text-lg tracking-wide m-0 bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Chat</h2>
       </div>
       <div className="flex-1 overflow-y-auto p-4 bg-zinc-900 pb-16">
+        {isDragging && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 pointer-events-none">
+            <span className="text-lg font-bold text-blue-300">Drop file to upload</span>
+          </div>
+        )}
         {messages.map((msg, idx) => (
           <div key={msg.id} className={`mb-4 flex items-start gap-2 rounded-lg p-2 ${msg.userId === userId ? 'bg-zinc-800' : ''} transition-opacity`}>
             <div className={`w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-base ${msg.userId === hostId ? 'ring-2 ring-green-400' : ''}`}>
