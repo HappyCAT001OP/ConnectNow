@@ -31,6 +31,7 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
   const [language, setLanguage] = useState<string>('javascript');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showPermissions, setShowPermissions] = useState<boolean>(false);
   
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
@@ -97,7 +98,16 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
     const hasGlobalPermission = allCanEdit;
     const hasIndividualPermission = userPermissions[userId];
 
+    // Set canEdit to true if user is host, has global permission, or has individual permission
     setCanEdit(isHost || hasGlobalPermission || !!hasIndividualPermission);
+    
+    // Log permission status for debugging
+    console.log('Permission status:', { 
+      isHost, 
+      hasGlobalPermission, 
+      hasIndividualPermission, 
+      canEdit: isHost || hasGlobalPermission || !!hasIndividualPermission 
+    });
   }, [callState?.hostId, userId, allCanEdit, userPermissions]);
 
   // Handle editor initialization
@@ -291,14 +301,14 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
             </div>
             
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-3 bg-zinc-800/80 px-4 py-2 rounded-lg border border-zinc-700/50 hover:bg-zinc-700/50 transition-colors cursor-pointer">
+              <label className="flex items-center gap-3 bg-blue-600/20 px-4 py-2 rounded-lg border border-blue-500/30 hover:bg-blue-600/30 transition-colors cursor-pointer">
                 <input
                   type="checkbox"
                   checked={allCanEdit}
                   onChange={toggleAllCanEdit}
                   className="rounded text-blue-500 focus:ring-blue-500 bg-zinc-700 border-zinc-600 h-4 w-4"
                 />
-                <span className="flex items-center gap-2 text-sm text-zinc-200">
+                <span className="flex items-center gap-2 text-sm text-blue-200 font-medium">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
@@ -308,13 +318,13 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
                   Allow all participants to edit
                 </span>
                 {allCanEdit && (
-                  <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30">Enabled</span>
+                  <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full border border-blue-500/40">Enabled</span>
                 )}
               </label>
               
               {!allCanEdit && participants.length > 1 && (
                 <button 
-                  onClick={() => document.getElementById('permissions-dropdown')?.classList.toggle('hidden')}
+                  onClick={() => setShowPermissions(!showPermissions)}
                   className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2 bg-zinc-800/80 px-4 py-2 rounded-lg border border-zinc-700/50 hover:bg-zinc-700/50 transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -322,7 +332,7 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
                     <circle cx="9" cy="7" r="4"></circle>
                   </svg>
                   <span>Individual permissions</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={showPermissions ? "rotate-180 transform" : ""}>
                     <polyline points="6 9 12 15 18 9"></polyline>
                   </svg>
                 </button>
@@ -330,8 +340,8 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
             </div>
           </div>
           
-          {!allCanEdit && participants.length > 1 && (
-            <div id="permissions-dropdown" className="mt-3 pt-3 border-t border-zinc-700/30 hidden">
+          {!allCanEdit && participants.length > 1 && showPermissions && (
+            <div className="mt-3 pt-3 border-t border-zinc-700/30">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm text-zinc-300 font-medium flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -411,6 +421,17 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
                 padding: { top: 16, bottom: 16 },
               }}
             />
+            
+            {/* Read-only indicator */}
+            {!canEdit && (
+              <div className="absolute top-4 left-4 bg-zinc-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-zinc-700/50 shadow-lg flex items-center gap-2 z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span className="text-xs text-zinc-300">Read-only mode</span>
+              </div>
+            )}
             
             {/* Status indicator */}
             <div className="absolute bottom-4 right-4 bg-zinc-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-zinc-700/50 shadow-lg flex items-center gap-2">
