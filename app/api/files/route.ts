@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
         url,
         name,
         userId,
-        fileId: fileId || undefined, // Include fileId if provided
+        fileId: fileId || undefined, // Store Cloudinary's public_id as a reference
         user: {
           connectOrCreate: {
             where: { id: userId },
