@@ -3,7 +3,22 @@ import MonacoEditor from '@monaco-editor/react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
-import { useCallState } from '@/context/CallProvider';
+import { useCallStateHooks } from '@stream-io/video-react-sdk';
+
+// Temporary solution until CallProvider is properly integrated
+const useCallState = () => {
+  const { useCallStateHooks } = require('@stream-io/video-react-sdk');
+  const { useCallSession } = useCallStateHooks();
+  const session = useCallSession();
+  
+  return {
+    callState: {
+      participants: session?.participants || {},
+      hostId: session?.createdBy?.id || null
+    },
+    userId: session?.sessionId || ''
+  };
+};
 
 type CodeShareProps = {
   roomId: string;
