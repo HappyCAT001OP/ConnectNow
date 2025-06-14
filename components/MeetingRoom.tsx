@@ -31,9 +31,6 @@ import {
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
 
 const MeetingRoom = () => {
-  import { useParams } from 'next/navigation';
-
-  const MeetingRoom = () => {
   const params = useParams();
   const roomId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const isPersonalRoom = false; // Adjust if you have personal room logic elsewhere
