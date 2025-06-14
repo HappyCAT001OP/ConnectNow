@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    // Accept extra fields but only use url, name, userId
+    // Accept extra fields but only use url, name, userId, and fileId
     const body = await req.json();
-    const { url, name, userId } = body;
+    const { url, name, userId, fileId } = body;
     if (!url || !name || !userId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
         url,
         name,
         userId,
+        fileId: fileId || undefined, // Include fileId if provided
       },
     });
     return NextResponse.json(file);

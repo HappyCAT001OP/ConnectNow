@@ -141,25 +141,29 @@ export default function ChatSidebar() {
       // Cloudinary provides a public_id, you can use this or generate your own fileId
       const fileId = fileData.public_id; // Using Cloudinary's public_id as fileId
 
-      // Store file metadata in your database via the /api/files route
-      console.log("Storing file metadata in database...");
-      console.log("Payload for /api/files:", { url: fileUrl, name: fileName, userId: userId, fileId: fileId });
-
+      // Store file metadata in database
       const dbResponse = await fetch('/api/files', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           url: fileUrl,
           name: fileName,
-          userId: userId,
-          fileId: fileId, // Pass Cloudinary's public_id or a generated ID
+          userId,
+          fileId: fileId, // Store Cloudinary's public_id
         }),
       });
 
       if (!dbResponse.ok) {
-         const dbErrorData = await dbResponse.json();
-         console.error("Failed to store file metadata:", dbResponse.status, dbErrorData);
-         throw new Error(`Failed to store file metadata: ${dbErrorData.message || dbResponse.statusText}`);
+        let dbErrorData = { message: dbResponse.statusText };
+        try {
+          dbErrorData = await dbResponse.json();
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+        }
+        console.error("Failed to store file metadata:", dbResponse.status, dbErrorData);
+        throw new Error(`Failed to store file metadata: ${dbErrorData.message || dbResponse.statusText}`);
       }
 
       const dbFileData = await dbResponse.json();
@@ -171,7 +175,9 @@ export default function ChatSidebar() {
 
     } catch (error: any) {
       console.error("File upload process failed:", error);
-      alert(`File upload failed: ${error.message}`);
+      // Create a more user-friendly error message
+      const errorMessage = error.message || 'Unknown error occurred';
+      alert(`File upload failed: ${errorMessage}`);
     }
   };
 

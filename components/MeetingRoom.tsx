@@ -120,7 +120,7 @@ const MeetingRoom = () => {
               {isHost && <HostParticipantsPanel roomId={roomId} />}
             </div>
           </div>
-          <div className="fixed bottom-0 flex w-full items-center justify-center gap-5 bg-black bg-opacity-80 py-3 z-40">
+          <div className="fixed bottom-0 flex w-full items-center justify-start px-10 gap-5 bg-black bg-opacity-80 py-3 z-40">
             <CallControls onLeave={() => router.push(`/`)} />
             <DropdownMenu>
               <div className="flex items-center">
