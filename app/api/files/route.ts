@@ -15,6 +15,12 @@ export async function POST(req: NextRequest) {
         name,
         userId,
         fileId: fileId || undefined, // Include fileId if provided
+        user: {
+          connectOrCreate: {
+            where: { id: userId },
+            create: { id: userId, username: userId, email: `${userId}@example.com` },
+          },
+        },
       },
     });
     return NextResponse.json(file);
