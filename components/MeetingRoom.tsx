@@ -31,9 +31,11 @@ import {
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
 
 const MeetingRoom = () => {
-  const searchParams = useSearchParams();
-  const isPersonalRoom = !!searchParams.get('personal');
-  const roomId = searchParams.get('id');
+  import { useParams } from 'next/navigation';
+
+  const params = useParams();
+  const roomId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
+  const isPersonalRoom = false; // Adjust if you have personal room logic elsewhere
   const router = useRouter();
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
   const [showParticipants, setShowParticipants] = useState(false);
