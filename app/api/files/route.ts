@@ -2,7 +2,12 @@ import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  const { url, name, userId } = await req.json();
+  // Accept extra fields but only use url, name, userId
+  const body = await req.json();
+  const { url, name, userId } = body;
+  if (!url || !name || !userId) {
+    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  }
   const file = await prisma.file.create({
     data: {
       url,
@@ -11,4 +16,4 @@ export async function POST(req: NextRequest) {
     },
   });
   return NextResponse.json(file);
-} 
+}

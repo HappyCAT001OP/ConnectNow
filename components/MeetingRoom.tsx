@@ -144,18 +144,18 @@ const MeetingRoom = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             <CallStatsButton />
-            <button onClick={() => setShowParticipants((prev) => !prev)}>
-              <div className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]">
-                <Users size={30} className="text-white" />
-              </div>
-            </button>
-            <button
+               <button
               onClick={() => setShowDetails((prev) => !prev)}
               className="px-4 py-2 rounded bg-zinc-800 text-white font-semibold shadow hover:bg-zinc-700 transition-colors"
             >
               Details
             </button>
-            {!isPersonalRoom && <EndCallButton />}
+             {!isPersonalRoom && <EndCallButton />}
+            <button onClick={() => setShowParticipants((prev) => !prev)}>
+              <div className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]">
+                <Users size={30} className="text-white" />
+              </div>
+            </button>
           </div>
         </div>
         {showChat && <ChatSidebar />}
