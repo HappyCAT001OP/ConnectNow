@@ -106,7 +106,7 @@ const MeetingRoom = () => {
             </div>
             {/* Meeting Details Panel (Sidebar) */}
             {showDetails && (
-              <div className="absolute top-0 right-0 h-full w-[300px] bg-zinc-900 border-l border-zinc-800 p-4 overflow-y-auto">
+              <div className="absolute top-4 right-4 h-[90%] w-[320px] bg-zinc-900 border-l border-zinc-800 p-4 rounded-2xl shadow-xl overflow-y-auto z-50 flex flex-col">
                 <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} hostName={hostName} meetingStartTime={meetingStartTime} />
               </div>
             )}

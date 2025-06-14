@@ -13,13 +13,12 @@ interface MeetingDetailsPanelProps {
 const MeetingDetailsPanel: React.FC<MeetingDetailsPanelProps> = ({ roomId, onClose, hostName, meetingStartTime }) => {
 
   return (
-    <div className="bg-zinc-800 text-white p-4 rounded-md shadow-md">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold">Meeting Details</h3>
+    <div className="bg-zinc-800 text-white p-6 rounded-2xl shadow-xl border border-zinc-700">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-bold tracking-wide bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Meeting Details</h3>
         {onClose && (
-          <button onClick={onClose} className="text-gray-400 hover:text-white focus:outline-none">
-            {/* You can add an X icon here */}
-            Close
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-700 hover:bg-blue-500 text-white transition-colors focus:outline-none" title="Close">
+            <span className="text-lg">×</span>
           </button>
         )}
       </div>
