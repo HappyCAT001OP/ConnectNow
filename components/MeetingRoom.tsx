@@ -69,7 +69,7 @@ const MeetingRoom = () => {
     <div className="flex h-screen w-full flex-col bg-black">
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex flex-1 flex-col">
+        <div className={cn("flex flex-1 flex-col transition-all duration-300", { 'w-full': !showChat, 'w-[calc(100%-340px)]': showChat })}>
           <div className="flex justify-between items-center px-6 py-2 bg-zinc-900 border-b border-zinc-800">
             <div className="flex gap-2">
               <button
@@ -159,7 +159,7 @@ const MeetingRoom = () => {
           </div>
         </div>
         {showChat && (
-          <div className="relative h-screen">
+          <div className="relative h-screen w-[340px] transition-all duration-300">
             <ChatSidebar />
           </div>
         )}
