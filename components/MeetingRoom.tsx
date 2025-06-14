@@ -150,12 +150,12 @@ const MeetingRoom = () => {
             >
               Details
             </button>
-            {!isPersonalRoom && <EndCallButton />}
             <button onClick={() => setShowParticipants((prev) => !prev)}>
               <div className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]">
                 <Users size={30} className="text-white" />
               </div>
             </button>
+            {!isPersonalRoom && <EndCallButton />}
           </div>
         </div>
         {showChat && (
