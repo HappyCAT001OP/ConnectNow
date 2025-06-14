@@ -82,7 +82,7 @@ const MeetingRoom = () => {
     };
   }, []);
 
-  if (callingState !== CallingState.JOINED) return <Loader />;}
+  if (callingState !== CallingState.JOINED) return <Loader />;
 
   const CallLayout = () => {
     switch (layout) {
