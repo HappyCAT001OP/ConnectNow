@@ -10,7 +10,7 @@ import {
 } from '@stream-io/video-react-sdk';
 import { LayoutList, Users } from 'lucide-react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ChatSidebar from './ChatSidebar';
 import CodeShare from './CodeShare';
 import Whiteboard from './Whiteboard';
@@ -40,19 +40,49 @@ const MeetingRoom = () => {
   const { useCallCallingState } = useCallStateHooks();
   const [activeTab, setActiveTab] = useState<'video' | 'whiteboard' | 'codeshare'>('video');
   const [showChat, setShowChat] = useState(false);
-  const [showDetails, setShowDetails] = useState(false); // New state for the details panel
+  const [showDetails, setShowDetails] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // for more detail about types of CallingState see: https://getstream-io/video-react-sdk/calling-state
   const callingState = useCallCallingState();
 
   const { user } = useUser();
-  const hostName = user?.username || 'Unknown Host';
-  const meetingStartTime = new Date().toLocaleTimeString();
-  const isHost = user?.id === /* logic to determine host, e.g., call.creatorId or first participant */ roomId; // Replace with real host logic
+  const isHost = user?.id === roomId; // Replace with real host logic
 
+  // Auto-hide controls when mouse is inactive
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // Show controls when mouse moves
+      setShowControls(true);
+      
+      // If mouse is in the bottom 150px of the screen, keep controls visible
+      const isNearBottom = e.clientY > window.innerHeight - 150;
+      
+      // Clear any existing timer
+      if (controlsTimerRef.current) {
+        clearTimeout(controlsTimerRef.current);
+      }
+      
+      // If not near bottom, set timer to hide controls
+      if (!isNearBottom) {
+        controlsTimerRef.current = setTimeout(() => {
+          setShowControls(false);
+        }, 3000);
+      }
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (controlsTimerRef.current) {
+        clearTimeout(controlsTimerRef.current);
+      }
+    };
+  }, []);
 
-
-  if (callingState !== CallingState.JOINED) return <Loader />;
+  if (callingState !== CallingState.JOINED) return <Loader />;}
 
   const CallLayout = () => {
     switch (layout) {
@@ -66,39 +96,16 @@ const MeetingRoom = () => {
   };
 
   return (
-    <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black">
-      {/* Meeting Header with Room Info */}
-      <div className="flex justify-between items-center px-6 py-3 bg-zinc-900/80 border-b border-zinc-800/50 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-green-400 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">CN</span>
-          </div>
-          <div>
-            <h1 className="text-white font-bold text-lg tracking-tight">Meeting Room: {roomId.substring(0, 8)}...</h1>
-            <p className="text-zinc-400 text-xs">Started at {meetingStartTime} • Host: {hostName}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowDetails((prev) => !prev)}
-            className="px-3 py-1.5 rounded-full bg-zinc-800/80 text-zinc-200 text-sm font-medium hover:bg-zinc-700/80 transition-colors flex items-center gap-2 border border-zinc-700/50"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            Details
-          </button>
-          <button
-            onClick={() => setShowChat((prev) => !prev)}
-            className="px-3 py-1.5 rounded-full bg-blue-600/90 text-white text-sm font-medium hover:bg-blue-700/90 transition-colors flex items-center gap-2 border border-blue-500/50"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            {showChat ? 'Close Chat' : 'Chat'}
-          </button>
-        </div>
-      </div>
+    <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className={cn("flex flex-1 flex-col transition-all duration-300", { 'w-full': !showChat, 'w-[calc(100%-340px)]': showChat })}>
-          <div className="flex justify-between items-center px-6 py-3 bg-zinc-900/60 border-b border-zinc-800/50">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Main Content Area */}
+        <div className="flex flex-1 flex-col transition-all duration-300 w-full">
+          {/* Tab Navigation - Auto-hide with controls */}
+          <div className={cn("flex justify-between items-center px-6 py-3 bg-zinc-900/60 border-b border-zinc-800/50 transition-opacity duration-300", {
+            'opacity-0 pointer-events-none': !showControls,
+            'opacity-100': showControls
+          })}>
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab('video')}
@@ -128,18 +135,41 @@ const MeetingRoom = () => {
                 </div>
               </button>
             </div>
-          </div>
-          <div className="relative flex size-full items-center justify-center p-4">
-            <div className="flex size-full max-w-[1200px] items-center rounded-xl overflow-hidden border border-zinc-800/30 shadow-2xl shadow-black/30 bg-zinc-950/30">
-              {activeTab === 'video' && <CallLayout />}
-              {activeTab === 'whiteboard' && <Whiteboard roomId={roomId} />}
-              {activeTab === 'codeshare' && <CodeShare roomId={roomId} />}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowDetails((prev) => !prev)}
+                className="px-3 py-1.5 rounded-full bg-zinc-800/80 text-zinc-200 text-sm font-medium hover:bg-zinc-700/80 transition-colors flex items-center gap-2 border border-zinc-700/50"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                Details
+              </button>
+              <button
+                onClick={() => setShowChat((prev) => !prev)}
+                className="px-3 py-1.5 rounded-full bg-blue-600/90 text-white text-sm font-medium hover:bg-blue-700/90 transition-colors flex items-center gap-2 border border-blue-500/50"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                {showChat ? 'Close Chat' : 'Chat'}
+              </button>
             </div>
+          </div>
+          
+          {/* Main Content */}
+          <div className="relative flex size-full items-center justify-center">
+            {activeTab === 'codeshare' ? (
+              <div className="flex size-full items-center">
+                <CodeShare roomId={roomId} />
+              </div>
+            ) : (
+              <div className="flex size-full items-center">
+                {activeTab === 'video' && <CallLayout />}
+                {activeTab === 'whiteboard' && <Whiteboard roomId={roomId} />}
+              </div>
+            )}
             
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
               <div className="absolute top-8 right-8 w-[350px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 p-5 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col animate-in fade-in slide-in-from-right duration-300">
-                <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} hostName={hostName} meetingStartTime={meetingStartTime} />
+                <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} />
               </div>
             )}
             
@@ -168,8 +198,11 @@ const MeetingRoom = () => {
             </div>
           </div>
           
-          {/* Control Bar */}
-          <div className="fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-4 z-40">
+          {/* Control Bar - Auto-hide */}
+          <div className={cn("fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-4 z-40 transition-transform duration-300", {
+            'translate-y-24': !showControls,
+            'translate-y-0': showControls
+          })}>
             <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-800/50 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
               {/* Call Controls */}
               <div className="flex items-center gap-3 mr-2">
@@ -224,8 +257,10 @@ const MeetingRoom = () => {
             </div>
           </div>
         </div>
+        
+        {/* Chat Sidebar - Positioned absolutely to avoid overlap */}
         {showChat && (
-          <div className="relative h-screen w-[340px] transition-all duration-300">
+          <div className="absolute right-0 top-0 h-full w-[340px] transition-all duration-300 z-30">
             <ChatSidebar />
           </div>
         )}
