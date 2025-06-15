@@ -32,6 +32,7 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
   const [language, setLanguage] = useState<string>('javascript');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showPermissions, setShowPermissions] = useState<boolean>(false);
+  const [fontSize, setFontSize] = useState<number>(14);
   
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
@@ -255,13 +256,23 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
             </svg>
             <span>Font Size:</span>
             <div className="flex items-center gap-1">
-              <button className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors">
+              <button
+                className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors"
+                onClick={() => setFontSize((prev) => Math.max(10, prev - 1))}
+                aria-label="Decrease font size"
+                disabled={fontSize <= 10}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
               </button>
-              <span className="w-6 text-center">14</span>
-              <button className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors">
+              <span className="w-6 text-center">{fontSize}</span>
+              <button
+                className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors"
+                onClick={() => setFontSize((prev) => Math.min(32, prev + 1))}
+                aria-label="Increase font size"
+                disabled={fontSize >= 32}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
