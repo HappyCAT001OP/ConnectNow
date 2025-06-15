@@ -14,16 +14,11 @@ export async function POST(req: NextRequest) {
         url,
         name,
         userId,
-        fileId: fileId || undefined, // Store Cloudinary's public_id as a reference
-        user: {
-          connectOrCreate: {
-            where: { id: userId },
-            create: { id: userId, username: userId, email: `${userId}@example.com` },
-          },
-        },
+        fileId: fileId || undefined // Store Cloudinary's public_id as a reference
       },
     });
     return NextResponse.json(file);
+
   } catch (error) {
     console.error('File upload API error:', error);
     return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
