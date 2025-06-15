@@ -214,6 +214,7 @@ const MeetingRoom = () => {
             <div className="fixed bottom-8 right-8 z-[100]">
               <EndCallButton />
             </div>
+            
           </div>
           
           {/* Control Bar - Auto-hide */}
