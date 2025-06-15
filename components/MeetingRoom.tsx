@@ -169,13 +169,13 @@ const MeetingRoom = () => {
             )}
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
-              <div className="absolute top-8 right-8 w-[350px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 p-5 rounded-2xl shadow-2xl overflow-hidden z-[60] flex flex-col animate-in fade-in slide-in-from-right duration-300">
+              <div className="absolute top-8 left-8 w-[350px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 p-5 rounded-2xl shadow-2xl overflow-hidden z-[60] flex flex-col animate-in fade-in slide-in-from-left duration-300">
                 <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} />
               </div>
             )}
             {/* Participants Panel */}
             <div
-              className={cn('absolute top-8 left-8 w-[300px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 rounded-2xl shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-left duration-300', {
+              className={cn('absolute top-8 left-[370px] w-[300px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 rounded-2xl shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-left duration-300', {
                 'block': showParticipants,
                 'hidden': !showParticipants,
               })}
@@ -199,19 +199,19 @@ const MeetingRoom = () => {
             </div>
             {/* Chat Sidebar */}
             {showChat && (
-              <div className="fixed right-0 top-0 h-full w-[340px] z-[90] bg-zinc-900/95 border-l border-zinc-800/50 shadow-2xl animate-in fade-in slide-in-from-right duration-300 flex flex-col">
+              <div className="fixed left-[690px] top-0 h-full w-[340px] z-[90] bg-zinc-900/95 border-l border-zinc-800/50 shadow-2xl animate-in fade-in slide-in-from-left duration-300 flex flex-col">
                 <ChatSidebar roomId={roomId} onClose={() => setShowChat(false)} />
                 <button
                   onClick={() => setShowChat(false)}
-                  className="absolute top-4 left-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
+                  className="absolute top-4 right-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   Close Chat
                 </button>
               </div>
             )}
-            {/* End Call Button - ensure it is above all overlays */}
-            <div className="fixed bottom-8 right-8 z-[100]">
+            {/* End Call Button - moved to left bottom */}
+            <div className="fixed bottom-8 left-8 z-[100]">
               <EndCallButton />
             </div>
           </div>
