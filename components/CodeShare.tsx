@@ -108,7 +108,7 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
   };
 
   return (
-    <div className="h-[80vh] w-full flex flex-col items-center justify-start font-sans">
+    <div className="h-[90vh] w-full flex flex-col items-center justify-start font-sans">
       <div className="w-full max-w-[900px] mx-auto bg-zinc-900 rounded-xl shadow-lg p-6 border border-zinc-800">
         <div className="flex items-center mb-4 justify-between">
           <h2 className="bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent font-bold text-xl tracking-wide m-0">Code Share</h2>
@@ -148,7 +148,7 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
             ))}
           </div>
         )}
-        <div className="w-full h-[60vh]">
+        <div className="w-full h-[75vh]">
           <MonacoEditor
             height="100%"
             width="100%"
