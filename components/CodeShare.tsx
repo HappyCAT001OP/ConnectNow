@@ -173,56 +173,6 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
 
   return (
     <div className="h-full w-full flex flex-col bg-zinc-900 rounded-xl overflow-hidden border border-zinc-700/50 shadow-xl">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600/20 to-purple-500/20 border-b border-zinc-700/50 px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 flex items-center justify-center bg-blue-500/20 rounded-lg border border-blue-500/30">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-blue-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="16 18 22 12 16 6"></polyline>
-                <polyline points="8 6 2 12 8 18"></polyline>
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-zinc-100">Collaborative Code Editor</h2>
-              <p className="text-xs text-zinc-400">Real-time collaboration with your team</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {isHost ? (
-              <span className="text-sm bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full font-medium border border-purple-500/30 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                  <path d="M2 17l10 5 10-5"></path>
-                  <path d="M2 12l10 5 10-5"></path>
-                </svg>
-                Host
-              </span>
-            ) : (
-              <span className={`text-sm ${canEdit ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-zinc-700/50 text-zinc-400 border-zinc-600/30'} px-3 py-1 rounded-full font-medium border flex items-center gap-1`}>
-                {canEdit ? (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    Can Edit
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    View Only
-                  </>
-                )}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Toolbar */}
       <div className="bg-zinc-800/80 border-b border-zinc-700/50 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
