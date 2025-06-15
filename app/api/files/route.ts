@@ -9,6 +9,12 @@ export async function POST(req: NextRequest) {
     if (!url || !name || !userId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+    // Ensure user exists before creating file
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: { id: userId, username: userId, email: `${userId}@example.com` },
+    });
     const file = await prisma.file.create({
       data: {
         url,

@@ -216,7 +216,8 @@ const MeetingRoom = () => {
           {/* Control Bar - Auto-hide */}
           <div className={cn("fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-4 z-40 transition-transform duration-300", {
             'translate-y-24': !showControls,
-            'translate-y-0': showControls
+            'translate-y-0': showControls,
+            'pr-[340px]': showChat // Add right padding when chat is open
           })}>
             <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-800/50 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
               {/* Call Controls */}
