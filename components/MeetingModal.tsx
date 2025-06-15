@@ -1,6 +1,6 @@
 "use client";
 import { ReactNode } from "react";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
+import { Dialog, DialogContent } from "./ui/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import Image from "next/image";
@@ -35,8 +35,6 @@ const MeetingModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="flex w-full max-w-[520px] flex-col gap-6 border-none bg-dark-1 px-6 py-9 text-white">
-        <DialogTitle className="sr-only">{title}</DialogTitle>
-        <DialogDescription className="sr-only">Meeting modal dialog</DialogDescription>
         <div className="flex flex-col gap-6">
           {image && (
             <div className="flex justify-center">
@@ -60,7 +58,7 @@ const MeetingModal = ({
                 width={13}
                 height={13}
               />
-            )} {" "}
+            )}{" "}
             &nbsp;
             {buttonText || "Schedule Meeting"}
           </Button>
