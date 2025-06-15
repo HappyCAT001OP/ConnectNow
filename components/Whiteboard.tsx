@@ -1,8 +1,6 @@
 import { Tldraw } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
-import { useEffect, useRef, useState } from 'react';
-import { WebsocketProvider } from 'y-websocket';
-import * as Y from 'yjs';
+import { useEffect, useState } from 'react';
 
 type WhiteboardProps = {
   roomId: string;
@@ -10,56 +8,15 @@ type WhiteboardProps = {
 
 const Whiteboard = ({ roomId }: WhiteboardProps) => {
   const [isLoading, setIsLoading] = useState(true);
-  const ydocRef = useRef<Y.Doc | null>(null);
-  const providerRef = useRef<WebsocketProvider | null>(null);
-  const ymapRef = useRef<Y.Map<any> | null>(null);
-  const [tldrawState, setTldrawState] = useState<any>(null);
 
   useEffect(() => {
-    if (!roomId) return;
-    // Initialize Yjs document
-    if (!ydocRef.current) {
-      ydocRef.current = new Y.Doc();
-    }
-    // Initialize WebSocket provider
-    if (!providerRef.current) {
-      providerRef.current = new WebsocketProvider(process.env.NEXT_PUBLIC_YJS_URL!, roomId + '-whiteboard', ydocRef.current!);
-    }
-    // Initialize the map if not already
-    if (!ymapRef.current && ydocRef.current) {
-      ymapRef.current = ydocRef.current.getMap('tldraw');
-    }
-    // Listen for whiteboard state changes
-    const updateTldrawState = () => {
-      setTldrawState(ymapRef.current?.get('state') || null);
-    };
-    if (ymapRef.current) {
-      ymapRef.current.observeDeep(updateTldrawState);
-      updateTldrawState();
-    }
-    setIsLoading(false);
-    // Cleanup
-    return () => {
-      if (providerRef.current) {
-        providerRef.current.destroy();
-        providerRef.current = null;
-      }
-      if (ydocRef.current) {
-        ydocRef.current.destroy();
-        ydocRef.current = null;
-      }
-      if (ymapRef.current) {
-        ymapRef.current.unobserveDeep(updateTldrawState);
-      }
-    };
-  }, [roomId]);
+    // Simulate loading time for the whiteboard
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
 
-  // Handler to sync Tldraw state to yjs
-  const handleTldrawChange = (state: any) => {
-    if (ymapRef.current) {
-      ymapRef.current.set('state', state);
-    }
-  };
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-center p-4">
@@ -79,6 +36,7 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
             Room: {roomId.substring(0, 8)}...
           </div>
         </div>
+
         {/* Whiteboard Container */}
         <div className="flex-1 bg-white">
           {isLoading ? (
@@ -89,13 +47,11 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
               </div>
             </div>
           ) : (
-            <Tldraw
-              snapshot={tldrawState}
-              onChange={handleTldrawChange}
-            />
+            <Tldraw />
           )}
         </div>
       </div>
+      
       <div className="mt-4 text-center text-xs text-zinc-500">
         <p>Draw, sketch, and collaborate in real-time with other participants</p>
       </div>
