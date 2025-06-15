@@ -5,21 +5,6 @@ import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 import { useCallStateHooks } from '@stream-io/video-react-sdk';
 
-// Temporary solution until CallProvider is properly integrated
-const useCallState = () => {
-  const { useCallStateHooks } = require('@stream-io/video-react-sdk');
-  const { useCallSession } = useCallStateHooks();
-  const session = useCallSession();
-  
-  return {
-    callState: {
-      participants: session?.participants || {},
-      hostId: session?.createdBy?.id || null
-    },
-    userId: session?.sessionId || ''
-  };
-};
-
 type CodeShareProps = {
   roomId: string;
 };
@@ -41,7 +26,14 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
   const yTextRef = useRef<Y.Text | null>(null);
   const yMapRef = useRef<Y.Map<any> | null>(null);
 
-  const { callState, userId } = useCallState();
+  // Use useCallStateHooks directly
+  const { useCallSession } = useCallStateHooks();
+  const session = useCallSession();
+  const callState = {
+    participants: session?.participants || {},
+    hostId: session?.createdBy?.id || null
+  };
+  const userId = session?.sessionId || '';
 
   useEffect(() => {
     // Initialize Yjs document and provider
