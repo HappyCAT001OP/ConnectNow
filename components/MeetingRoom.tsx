@@ -269,7 +269,6 @@ const MeetingRoom = () => {
                 <Users size={18} />
                 <span className="text-sm font-medium">Participants</span>
               </button>
-              
               {/* End Call Button */}
               {!isPersonalRoom && <EndCallButton />}
             </div>
