@@ -407,7 +407,7 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
                 readOnly: !canEdit,
                 minimap: { enabled: true },
                 scrollBeyondLastLine: false,
-                fontSize: 14,
+                fontSize: fontSize,
                 wordWrap: 'on',
                 automaticLayout: true,
                 lineNumbers: 'on',
@@ -461,6 +461,99 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
       `}</style>
     </div>
   );
+};
+
+export default CodeShare;
+const [fontSize, setFontSize] = useState<number>(14);
+const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(true);
+const handleFontSizeChange = (delta: number) => {
+  setFontSize((prev) => Math.max(10, Math.min(32, prev + delta)));
+};
+const handleAutoSaveToggle = () => {
+  setAutoSaveEnabled((prev) => !prev);
+};
+<MonacoEditor
+  height="100%"
+  language={language}
+  theme="vs-dark"
+  value={code}
+  onChange={handleChange}
+  onMount={handleEditorDidMount}
+  options={{
+    readOnly: !canEdit,
+    minimap: { enabled: true },
+    scrollBeyondLastLine: false,
+    fontSize: fontSize,
+    wordWrap: 'on',
+    automaticLayout: true,
+    lineNumbers: 'on',
+    renderLineHighlight: 'all',
+    scrollbar: {
+      vertical: 'visible',
+      horizontal: 'visible',
+      verticalScrollbarSize: 10,
+      horizontalScrollbarSize: 10,
+    },
+    padding: { top: 16, bottom: 16 },
+  }}
+/>
+<div className="text-sm text-zinc-300 flex items-center gap-2 bg-zinc-800 px-3 py-1.5 rounded-md border border-zinc-700/50 cursor-pointer select-none" onClick={handleAutoSaveToggle}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className={autoSaveEnabled ? "text-green-400" : "text-zinc-500"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 6L9 17l-5-5"></path>
+  </svg>
+  <span>{autoSaveEnabled ? "Auto-saving enabled" : "Auto-saving disabled"}</span>
+</div>
+<div className="flex items-center gap-1">
+  <button className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors" onClick={() => handleFontSizeChange(-1)}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+  </button>
+  <span className="w-6 text-center">{fontSize}</span>
+  <button className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors" onClick={() => handleFontSizeChange(1)}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+  </button>
+</div>
+
+{/* Read-only indicator */}
+{!canEdit && (
+  <div className="absolute top-4 left-4 bg-zinc-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-zinc-700/50 shadow-lg flex items-center gap-2 z-10">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+    <span className="text-xs text-zinc-300">Read-only mode</span>
+  </div>
+)}
+
+{/* Status indicator */}
+<div className="absolute bottom-4 right-4 bg-zinc-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-zinc-700/50 shadow-lg flex items-center gap-2">
+  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+  <span className="text-xs text-zinc-300">Connected to {participants.length} participant{participants.length !== 1 ? 's' : ''}</span>
+</div>
+
+{/* Add custom scrollbar styles */}
+<style jsx>{`
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(39, 39, 42, 0.3);
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(82, 82, 91, 0.5);
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(82, 82, 91, 0.7);
+  }
+`}</style>
+</div>
+);
 };
 
 export default CodeShare;
