@@ -158,29 +158,28 @@ const MeetingRoom = () => {
             'pr-[340px]': showChat, // Add padding when chat is open to prevent overlap
           })}>  
             {activeTab === 'codeshare' ? (
-              <div className="flex size-full items-center">
+              <div className="flex size-full items-center relative">
                 <CodeShare roomId={roomId} />
               </div>
             ) : (
-              <div className="flex size-full items-center">
+              <div className="flex size-full items-center relative">
                 {activeTab === 'video' && <CallLayout />}
                 {activeTab === 'whiteboard' && <Whiteboard roomId={roomId} />}
               </div>
             )}
-            
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
-              <div className="absolute top-8 right-8 w-[350px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 p-5 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col animate-in fade-in slide-in-from-right duration-300">
+              <div className="absolute top-8 right-8 w-[350px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 p-5 rounded-2xl shadow-2xl overflow-hidden z-[60] flex flex-col animate-in fade-in slide-in-from-right duration-300">
                 <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} />
               </div>
             )}
-            
             {/* Participants Panel */}
             <div
-              className={cn('absolute top-8 left-8 w-[300px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-left duration-300', {
+              className={cn('absolute top-8 left-8 w-[300px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 rounded-2xl shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-left duration-300', {
                 'block': showParticipants,
                 'hidden': !showParticipants,
               })}
+              style={{maxHeight: '80vh'}}
             >
               <div className="p-4 border-b border-zinc-800/50">
                 <div className="flex items-center justify-between">
@@ -193,10 +192,20 @@ const MeetingRoom = () => {
                   </button>
                 </div>
               </div>
-              <div className="max-h-[70vh] overflow-y-auto">
+              <div className="max-h-[65vh] overflow-y-auto custom-scrollbar">
                 <CallParticipantsList onClose={() => setShowParticipants(false)} />
                 {isHost && <HostParticipantsPanel roomId={roomId} />}
               </div>
+            </div>
+            {/* Chat Sidebar */}
+            {showChat && (
+              <div className="fixed right-0 top-0 h-full w-[340px] z-[70] bg-zinc-900/95 border-l border-zinc-800/50 shadow-2xl animate-in fade-in slide-in-from-right duration-300 flex flex-col">
+                <ChatSidebar roomId={roomId} onClose={() => setShowChat(false)} />
+              </div>
+            )}
+            {/* End Call Button - ensure it is above all overlays */}
+            <div className="fixed bottom-8 right-8 z-[80]">
+              <EndCallButton />
             </div>
           </div>
           
