@@ -1,6 +1,10 @@
 import { Tldraw } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { WebsocketProvider } from 'y-websocket';
+import * as Y from 'yjs';
+import { useUser } from '@clerk/nextjs';
+import { useCall } from '@stream-io/video-react-sdk';
 
 type WhiteboardProps = {
   roomId: string;
@@ -8,15 +12,55 @@ type WhiteboardProps = {
 
 const Whiteboard = ({ roomId }: WhiteboardProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [canEdit, setCanEdit] = useState(true);
+  const ydocRef = useRef<Y.Doc | null>(null);
+  const providerRef = useRef<WebsocketProvider | null>(null);
+  const ymapRef = useRef<Y.Map<any> | null>(null);
+  const { user } = useUser();
+  const call = useCall();
+  const userId = user?.id || 'unknown';
 
   useEffect(() => {
     // Simulate loading time for the whiteboard
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 800);
-
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!roomId) return;
+    if (!ydocRef.current) {
+      ydocRef.current = new Y.Doc();
+      ymapRef.current = ydocRef.current.getMap('permissions');
+    }
+    if (!providerRef.current) {
+      providerRef.current = new WebsocketProvider(process.env.NEXT_PUBLIC_YJS_URL!, roomId + '-whiteboard', ydocRef.current!);
+    }
+    // Listen for permission changes
+    const updatePermissions = () => {
+      const allCanEdit = ymapRef.current?.get('allCanEdit') ?? true;
+      const userPermissions = ymapRef.current?.get('userPermissions') ?? {};
+      setCanEdit(allCanEdit || !!userPermissions[userId]);
+    };
+    if (ymapRef.current) {
+      ymapRef.current.observeDeep(updatePermissions);
+      updatePermissions();
+    }
+    return () => {
+      if (providerRef.current) {
+        providerRef.current.destroy();
+        providerRef.current = null;
+      }
+      if (ydocRef.current) {
+        ydocRef.current.destroy();
+        ydocRef.current = null;
+      }
+      if (ymapRef.current) {
+        ymapRef.current.unobserveDeep(updatePermissions);
+      }
+    };
+  }, [roomId, userId]);
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-center p-4">
@@ -36,7 +80,6 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
             Room: {roomId.substring(0, 8)}...
           </div>
         </div>
-
         {/* Whiteboard Container */}
         <div className="flex-1 bg-white">
           {isLoading ? (
@@ -47,13 +90,19 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
               </div>
             </div>
           ) : (
-            <Tldraw />
+            <Tldraw
+              // @ts-ignore
+              yjsDoc={ydocRef.current}
+              // @ts-ignore
+              provider={providerRef.current}
+              readOnly={!canEdit}
+            />
           )}
         </div>
       </div>
-      
       <div className="mt-4 text-center text-xs text-zinc-500">
         <p>Draw, sketch, and collaborate in real-time with other participants</p>
+        {!canEdit && <p className="text-red-500">You have view-only access. Ask the host for edit permissions.</p>}
       </div>
     </div>
   );
