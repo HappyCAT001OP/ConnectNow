@@ -99,6 +99,24 @@ const MeetingRoom = () => {
     <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
 
       <div className="flex flex-1 overflow-hidden relative">
+        {/* Participants Sidebar - left */}
+        {showParticipants && (
+          <div className="fixed left-0 top-0 h-full w-[340px] z-[90] bg-zinc-900/95 border-r border-zinc-800/50 shadow-2xl animate-in fade-in slide-in-from-left duration-300 flex flex-col">
+            <div className="p-4 border-b border-zinc-800/50 flex items-center justify-between">
+              <h3 className="font-bold text-lg bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Participants</h3>
+              <button 
+                onClick={() => setShowParticipants(false)}
+                className="w-7 h-7 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-300"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            <div className="max-h-[65vh] overflow-y-auto custom-scrollbar flex-1">
+              <CallParticipantsList onClose={() => setShowParticipants(false)} />
+              {isHost && <HostParticipantsPanel roomId={roomId} />}
+            </div>
+          </div>
+        )}
         {/* Main Content Area */}
         <div className="flex flex-1 flex-col transition-all duration-300 w-full">
           {/* Tab Navigation - Auto-hide with controls */}
@@ -174,6 +192,7 @@ const MeetingRoom = () => {
               </div>
             )}
             {/* Participants Panel */}
+            {/* Removed floating participants panel */}
             <div
               className={cn('absolute top-8 left-8 w-[300px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 rounded-2xl shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-left duration-300', {
                 'block': showParticipants,
