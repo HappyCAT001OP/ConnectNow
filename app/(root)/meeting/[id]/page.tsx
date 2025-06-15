@@ -10,7 +10,6 @@ import Alert from '@/components/Alert';
 import MeetingRoom from '@/components/MeetingRoom';
 import MeetingSetup from '@/components/MeetingSetup';
 import { useGetCallById } from '@/hooks/useGetCallById';
-import { CallProvider } from '@/context/CallProvider';
 
 const MeetingPage = () => {
   const { id } = useParams();
@@ -38,9 +37,7 @@ const MeetingPage = () => {
         {!isSetupComplete ? (
           <MeetingSetup setIsSetupComplete={setIsSetupComplete} />
         ) : (
-          <CallProvider userId={user.id}>
-            <MeetingRoom />
-          </CallProvider>
+          <MeetingRoom />
         )}
         </StreamTheme>
       </StreamCall>

@@ -5,6 +5,21 @@ import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 import { useCallStateHooks } from '@stream-io/video-react-sdk';
 
+// Temporary solution until CallProvider is properly integrated
+const useCallState = () => {
+  const { useCallStateHooks } = require('@stream-io/video-react-sdk');
+  const { useCallSession } = useCallStateHooks();
+  const session = useCallSession();
+  
+  return {
+    callState: {
+      participants: session?.participants || {},
+      hostId: session?.createdBy?.id || null
+    },
+    userId: session?.sessionId || ''
+  };
+};
+
 type CodeShareProps = {
   roomId: string;
 };
@@ -17,7 +32,6 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
   const [language, setLanguage] = useState<string>('javascript');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showPermissions, setShowPermissions] = useState<boolean>(false);
-  const [fontSize, setFontSize] = useState<number>(14);
   
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
@@ -26,14 +40,7 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
   const yTextRef = useRef<Y.Text | null>(null);
   const yMapRef = useRef<Y.Map<any> | null>(null);
 
-  // Use useCallStateHooks directly
-  const { useCallSession } = useCallStateHooks();
-  const session = useCallSession();
-  const callState = {
-    participants: session?.participants || {},
-    hostId: session?.createdBy?.id || null
-  };
-  const userId = session?.sessionId || '';
+  const { callState, userId } = useCallState();
 
   useEffect(() => {
     // Initialize Yjs document and provider
@@ -165,6 +172,56 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
 
   return (
     <div className="h-full w-full flex flex-col bg-zinc-900 rounded-xl overflow-hidden border border-zinc-700/50 shadow-xl">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600/20 to-purple-500/20 border-b border-zinc-700/50 px-6 py-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 flex items-center justify-center bg-blue-500/20 rounded-lg border border-blue-500/30">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-blue-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-zinc-100">Collaborative Code Editor</h2>
+              <p className="text-xs text-zinc-400">Real-time collaboration with your team</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {isHost ? (
+              <span className="text-sm bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full font-medium border border-purple-500/30 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                  <path d="M2 17l10 5 10-5"></path>
+                  <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                Host
+              </span>
+            ) : (
+              <span className={`text-sm ${canEdit ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-zinc-700/50 text-zinc-400 border-zinc-600/30'} px-3 py-1 rounded-full font-medium border flex items-center gap-1`}>
+                {canEdit ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Can Edit
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    View Only
+                  </>
+                )}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Toolbar */}
       <div className="bg-zinc-800/80 border-b border-zinc-700/50 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -198,23 +255,13 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
             </svg>
             <span>Font Size:</span>
             <div className="flex items-center gap-1">
-              <button
-                className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors"
-                onClick={() => setFontSize((prev) => Math.max(10, prev - 1))}
-                aria-label="Decrease font size"
-                disabled={fontSize <= 10}
-              >
+              <button className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
               </button>
-              <span className="w-6 text-center">{fontSize}</span>
-              <button
-                className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors"
-                onClick={() => setFontSize((prev) => Math.min(32, prev + 1))}
-                aria-label="Increase font size"
-                disabled={fontSize >= 32}
-              >
+              <span className="w-6 text-center">14</span>
+              <button className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -223,27 +270,14 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
             </div>
           </div>
         </div>
-        {isHost && (
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-blue-300 font-medium bg-blue-600/20 px-4 py-2 rounded-lg border border-blue-500/30 hover:bg-blue-600/30 transition-colors">
-              <input
-                type="checkbox"
-                checked={allCanEdit}
-                onChange={toggleAllCanEdit}
-                className="rounded text-blue-500 focus:ring-blue-500 bg-zinc-700 border-zinc-600 h-4 w-4 mr-2"
-              />
-              Allow participants to edit
-            </label>
+        
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-zinc-300 bg-zinc-800 px-3 py-1.5 rounded-md border border-zinc-700/50 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-blue-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+            </svg>
+            <span>Room: {roomId.substring(0, 8)}...</span>
           </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2">
-        <div className="text-sm text-zinc-300 bg-zinc-800 px-3 py-1.5 rounded-md border border-zinc-700/50 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-blue-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
-          </svg>
-          <span>Room: {roomId.substring(0, 8)}...</span>
         </div>
       </div>
 
@@ -427,6 +461,41 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
       `}</style>
     </div>
   );
+};
+
+export default CodeShare;
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+    <span className="text-xs text-zinc-300">Read-only mode</span>
+  </div>
+)}
+
+{/* Status indicator */}
+<div className="absolute bottom-4 right-4 bg-zinc-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-zinc-700/50 shadow-lg flex items-center gap-2">
+  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+  <span className="text-xs text-zinc-300">Connected to {participants.length} participant{participants.length !== 1 ? 's' : ''}</span>
+</div>
+
+{/* Add custom scrollbar styles */}
+<style jsx>{`
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(39, 39, 42, 0.3);
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(82, 82, 91, 0.5);
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(82, 82, 91, 0.7);
+  }
+`}</style>
+</div>
+);
 };
 
 export default CodeShare;
