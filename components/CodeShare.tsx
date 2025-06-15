@@ -464,50 +464,6 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
 };
 
 export default CodeShare;
-const [fontSize, setFontSize] = useState<number>(14);
-const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(true);
-const handleFontSizeChange = (delta: number) => {
-  setFontSize((prev) => Math.max(10, Math.min(32, prev + delta)));
-};
-const handleAutoSaveToggle = () => {
-  setAutoSaveEnabled((prev) => !prev);
-};
-<MonacoEditor
-  height="100%"
-  language={language}
-  theme="vs-dark"
-  value={code}
-  onChange={handleChange}
-  onMount={handleEditorDidMount}
-  options={{
-    readOnly: !canEdit,
-    minimap: { enabled: true },
-    scrollBeyondLastLine: false,
-    fontSize: fontSize,
-    wordWrap: 'on',
-    automaticLayout: true,
-    lineNumbers: 'on',
-    renderLineHighlight: 'all',
-    scrollbar: {
-      vertical: 'visible',
-      horizontal: 'visible',
-      verticalScrollbarSize: 10,
-      horizontalScrollbarSize: 10,
-    },
-    padding: { top: 16, bottom: 16 },
-  }}
-/>
-<div className="text-sm text-zinc-300 flex items-center gap-2 bg-zinc-800 px-3 py-1.5 rounded-md border border-zinc-700/50 cursor-pointer select-none" onClick={handleAutoSaveToggle}>
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className={autoSaveEnabled ? "text-green-400" : "text-zinc-500"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 6L9 17l-5-5"></path>
-  </svg>
-  <span>{autoSaveEnabled ? "Auto-saving enabled" : "Auto-saving disabled"}</span>
-</div>
-<div className="flex items-center gap-1">
-  <button className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors" onClick={() => handleFontSizeChange(-1)}>
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
   </button>
   <span className="w-6 text-center">{fontSize}</span>
   <button className="w-6 h-6 flex items-center justify-center rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors" onClick={() => handleFontSizeChange(1)}>
