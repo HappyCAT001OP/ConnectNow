@@ -464,38 +464,3 @@ const CodeShare = ({ roomId }: CodeShareProps) => {
 };
 
 export default CodeShare;
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-    </svg>
-    <span className="text-xs text-zinc-300">Read-only mode</span>
-  </div>
-)}
-
-{/* Status indicator */}
-<div className="absolute bottom-4 right-4 bg-zinc-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-zinc-700/50 shadow-lg flex items-center gap-2">
-  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-  <span className="text-xs text-zinc-300">Connected to {participants.length} participant{participants.length !== 1 ? 's' : ''}</span>
-</div>
-
-{/* Add custom scrollbar styles */}
-<style jsx>{`
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(39, 39, 42, 0.3);
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(82, 82, 91, 0.5);
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(82, 82, 91, 0.7);
-  }
-`}</style>
-</div>
-);
-};
-
-export default CodeShare;
