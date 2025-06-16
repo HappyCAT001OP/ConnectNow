@@ -181,7 +181,7 @@ export default function ChatSidebar() {
       // Send message with file details
       // Use the database-generated id from the File model for the message's fileId reference
       // This ensures the Message model correctly references the File model's id field
-      sendMessage({ fileUrl, fileName, fileId: dbFileData.id, fileType: selectedFile.type });
+      sendMessage({ fileUrl, fileName, fileId: dbFileData.id });
       console.log("File chat message sent.");
 
     } catch (error: any) {
@@ -305,37 +305,6 @@ export default function ChatSidebar() {
                 </div>
               )}
             </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div key={msg.id} className="mb-2">
-            {msg.text && <div className="text-zinc-200">{msg.text}</div>}
-            {msg.fileUrl && (
-              <div className="mt-2">
-                {msg.fileType === 'application/pdf' ? (
-                  <iframe
-                    src={msg.fileUrl}
-                    title={msg.fileName}
-                    className="w-full h-64 border border-zinc-700 rounded"
-                  />
-                ) : (
-                  <div className="text-red-400 bg-zinc-800 p-2 rounded">
-                    Cannot preview this file type. Only PDF preview is supported.
-                  </div>
-                )}
-                <a
-                  href={msg.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block mt-1 text-blue-400 hover:underline"
-                >
-                  Download {msg.fileName}
-                </a>
-              </div>
-            )}
           </div>
         ))}
       </div>
