@@ -254,16 +254,7 @@ const MeetingRoom = () => {
         
         {/* Chat Sidebar - Positioned absolutely to avoid overlap */}
         {showChat && (
-          <div className="absolute right-0 top-0 h-full w-[340px] transition-all duration-300 z-30">
-            <ChatSidebar />
-            <button
-              onClick={() => setShowChat(false)}
-              className="absolute top-4 left-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              Close Chat
-            </button>
-          </div>
+          <ChatSidebar roomId={roomId} onClose={() => setShowChat(false)} />
         )}
       </div>
     </div>
