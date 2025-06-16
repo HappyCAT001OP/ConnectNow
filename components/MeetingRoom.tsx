@@ -100,7 +100,9 @@ const MeetingRoom = () => {
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* Main Content Area */}
-        <div className="flex flex-1 flex-col transition-all duration-300 w-full">
+        <div className={cn("flex flex-1 flex-col transition-all duration-300 w-full", {
+          'pr-[340px]': showChat // Add padding when chat is open to prevent overlap
+        })}>
           {/* Tab Navigation - Auto-hide with controls */}
           <div className={cn("flex justify-between items-center px-6 py-3 bg-zinc-900/60 border-b border-zinc-800/50 transition-opacity duration-300", {
             'opacity-0 pointer-events-none': !showControls,
@@ -155,14 +157,14 @@ const MeetingRoom = () => {
           
           {/* Main Content */}
           <div className={cn("relative flex size-full items-center justify-center", {
-            'pr-[340px]': showChat, // Add padding when chat is open to prevent overlap
-          })}>  
+            'pr-[340px]': showChat,
+          })}>
             {activeTab === 'codeshare' ? (
               <div className="flex size-full items-center relative">
                 <CodeShare roomId={roomId} />
               </div>
             ) : (
-              <div className="flex size-full items-center relative">
+              <div className="flex-1 flex items-center justify-center relative min-h-0 min-w-0">
                 {activeTab === 'video' && <CallLayout />}
                 {activeTab === 'whiteboard' && <Whiteboard roomId={roomId} />}
               </div>
@@ -192,7 +194,9 @@ const MeetingRoom = () => {
           </div>
           
           {/* Control Bar - Auto-hide */}
-          <div className={cn("fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-4 z-40 transition-transform duration-300", {
+          <div className={cn("fixed bottom-0 left-0 right-0 flex items-center px-6 py-4 z-40 transition-transform duration-300", {
+            'justify-center': !showChat,
+            'justify-start ml-[24px]': showChat,
             'translate-y-24': !showControls,
             'translate-y-0': showControls
           })}>
@@ -253,7 +257,7 @@ const MeetingRoom = () => {
         
         {/* Chat Sidebar - Positioned absolutely to avoid overlap */}
         {showChat && (
-          <ChatSidebar roomId={roomId} onClose={() => setShowChat(false)} />
+          <ChatSidebar roomId={roomId} onClose={() => setShowChat(false)} className="fixed top-0 right-0 h-full z-50" />
         )}
       </div>
     </div>
