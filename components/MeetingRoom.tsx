@@ -170,7 +170,7 @@ const MeetingRoom = () => {
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
               <MeetingDetailsPanel
-                meetingId={meetingId}
+                roomId={roomId}
                 onClose={() => setShowDetails(false)}
                 className="fixed top-8 right-8 z-40"
               />
@@ -184,7 +184,7 @@ const MeetingRoom = () => {
             )}
             {showChat && (
               <ChatSidebar
-                meetingId={meetingId}
+                roomId={roomId}
                 onClose={() => setShowChat(false)}
                 className="fixed top-0 right-0 h-full z-50"
               />
