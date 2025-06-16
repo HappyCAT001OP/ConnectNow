@@ -187,6 +187,8 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
       // Use the database-generated id from the File model for the message's fileId reference
       // This ensures the Message model correctly references the File model's id field
       sendMessage({ fileUrl, fileName, fileId: dbFileData.id });
+      // Optionally, if you want to persist the message server-side, POST to /api/messages with fileId: dbFileData.id
+      // await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, username, fileId: dbFileData.id }) });
       console.log("File chat message sent.");
 
     } catch (error: any) {
