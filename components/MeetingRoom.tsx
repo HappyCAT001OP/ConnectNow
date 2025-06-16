@@ -189,7 +189,6 @@ const MeetingRoom = () => {
                 className="fixed top-0 right-0 h-full z-50"
               />
             )}
-            <EndCallButton className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50" />
           </div>
           
           {/* Control Bar - Auto-hide */}
