@@ -17,8 +17,13 @@ interface ChatMessage {
   time: number;
 }
 
-export default function ChatSidebar() {
-  const { id: roomId } = useParams();
+interface ChatSidebarProps {
+  roomId: string;
+  onClose?: () => void;
+  className?: string;
+}
+
+export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarProps) {
   const { user } = useUser();
   const call = useCall();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -228,7 +233,7 @@ export default function ChatSidebar() {
   return (
     <aside 
       ref={dropRef} 
-      className={`w-[340px] bg-zinc-900/95 backdrop-blur-md text-white h-screen border-l border-zinc-800/50 flex flex-col font-sans transition-all ${isDragging ? 'ring-2 ring-blue-400/70' : ''}`}
+      className={`w-[340px] bg-zinc-900/95 backdrop-blur-md text-white h-screen border-l border-zinc-800/50 flex flex-col font-sans transition-all ${isDragging ? 'ring-2 ring-blue-400/70' : ''} ${className || ''}`}
     >
       <div className="px-5 py-4 border-b border-zinc-800/50 bg-zinc-950/70 flex items-center justify-between">
         <h2 className="font-bold text-lg tracking-wide m-0 bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent flex items-center gap-2">
@@ -237,6 +242,15 @@ export default function ChatSidebar() {
           </svg>
           Chat
         </h2>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ml-2 px-3 py-1.5 rounded-full bg-zinc-800/80 text-zinc-200 border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            Close Chat
+          </button>
+        )}
       </div>
       
       <div className="flex-1 overflow-y-auto p-4 bg-zinc-900/70 pb-16 space-y-4">
