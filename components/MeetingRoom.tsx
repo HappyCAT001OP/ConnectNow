@@ -177,7 +177,7 @@ const MeetingRoom = () => {
             )}
             {showParticipants && (
               <HostParticipantsPanel
-                meetingId={meetingId}
+                meetingId={roomId}
                 onClose={() => setShowParticipants(false)}
                 className="fixed top-8 right-[370px] z-40"
               />
