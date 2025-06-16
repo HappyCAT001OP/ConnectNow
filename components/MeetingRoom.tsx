@@ -169,51 +169,27 @@ const MeetingRoom = () => {
             )}
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
-              <div className="absolute top-8 left-8 w-[350px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 p-5 rounded-2xl shadow-2xl overflow-hidden z-[60] flex flex-col animate-in fade-in slide-in-from-left duration-300">
-                <MeetingDetailsPanel roomId={roomId} onClose={() => setShowDetails(false)} />
-              </div>
+              <MeetingDetailsPanel
+                meetingId={meetingId}
+                onClose={() => setShowDetails(false)}
+                className="fixed top-8 right-8 z-40"
+              />
             )}
-            {/* Participants Panel */}
-            <div
-              className={cn('absolute top-8 left-[370px] w-[300px] bg-zinc-900/95 backdrop-blur-md border border-zinc-700/50 rounded-2xl shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-left duration-300', {
-                'block': showParticipants,
-                'hidden': !showParticipants,
-              })}
-              style={{maxHeight: '80vh'}}
-            >
-              <div className="p-4 border-b border-zinc-800/50">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-lg bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Participants</h3>
-                  <button 
-                    onClick={() => setShowParticipants(false)}
-                    className="w-7 h-7 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-300"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  </button>
-                </div>
-              </div>
-              <div className="max-h-[65vh] overflow-y-auto custom-scrollbar">
-                <CallParticipantsList onClose={() => setShowParticipants(false)} />
-                {isHost && <HostParticipantsPanel roomId={roomId} />}
-              </div>
-            </div>
-            {/* Chat Sidebar */}
+            {showParticipants && (
+              <HostParticipantsPanel
+                meetingId={meetingId}
+                onClose={() => setShowParticipants(false)}
+                className="fixed top-8 right-[370px] z-40"
+              />
+            )}
             {showChat && (
-              <div className="fixed left-[690px] top-0 h-full w-[340px] z-[90] bg-zinc-900/95 border-l border-zinc-800/50 shadow-2xl animate-in fade-in slide-in-from-left duration-300 flex flex-col">
-                <ChatSidebar roomId={roomId} onClose={() => setShowChat(false)} />
-                <button
-                  onClick={() => setShowChat(false)}
-                  className="absolute top-4 right-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  Close Chat
-                </button>
-              </div>
+              <ChatSidebar
+                meetingId={meetingId}
+                onClose={() => setShowChat(false)}
+                className="fixed top-0 right-0 h-full z-50"
+              />
             )}
-            {/* End Call Button - moved to left bottom */}
-            <div className="fixed bottom-8 left-8 z-[100]">
-              <EndCallButton />
-            </div>
+            <EndCallButton className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50" />
           </div>
           
           {/* Control Bar - Auto-hide */}
