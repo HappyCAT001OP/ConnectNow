@@ -37,7 +37,7 @@ const MeetingRoom = () => {
   const router = useRouter();
 
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
-  const [showParticipants, setShowParticipants] = useState(true); // Set to true by default to show participants
+  const [showParticipants, setShowParticipants] = useState(false); // Changed to false by default
   const { useCallCallingState } = useCallStateHooks();
   const [activeTab, setActiveTab] = useState<'video' | 'whiteboard' | 'codeshare'>('video');
   const [showChat, setShowChat] = useState(false);
@@ -98,23 +98,8 @@ const MeetingRoom = () => {
 
   return (
     <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
-
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Participants Panel - Always visible on the left side */}
-        <div className="w-[280px] bg-zinc-900 border-r border-zinc-800/50 overflow-y-auto">
-          <div className="p-4 border-b border-zinc-800/50">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Users size={18} className="text-blue-400" />
-              Participants
-            </h3>
-            <p className="text-sm text-zinc-400 mt-1">People in the meeting</p>
-          </div>
-          <div className="p-2">
-            <CallParticipantsList />
-          </div>
-        </div>
-
-         {/* Main Content Area */}
+        {/* Main Content Area */}
         <div className="flex flex-1 flex-col transition-all duration-300 w-full">
           {/* Tab Navigation - Auto-hide with controls */}
           <div className={cn("flex justify-between items-center px-6 py-3 bg-zinc-900/60 border-b border-zinc-800/50 transition-opacity duration-300", {
@@ -159,6 +144,13 @@ const MeetingRoom = () => {
                 Details
               </button>
               <button
+                onClick={() => setShowParticipants((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-full ${showParticipants ? 'bg-blue-600/90 text-white border-blue-500/50' : 'bg-zinc-800/80 text-zinc-200 border-zinc-700/50'} text-sm font-medium hover:bg-blue-700/90 transition-colors flex items-center gap-2 border`}
+              >
+                <Users size={16} />
+                Participants
+              </button>
+              <button
                 onClick={() => setShowChat((prev) => !prev)}
                 className={"px-3 py-1.5 rounded-full bg-blue-600/90 text-white text-sm font-medium hover:bg-blue-700/90 transition-colors flex items-center gap-2 border border-blue-500/50"}
               >
@@ -187,6 +179,14 @@ const MeetingRoom = () => {
               <MeetingDetailsPanel
                 meetingId={roomId}
                 onClose={() => setShowDetails(false)}
+                className="fixed top-8 right-8 z-40"
+              />
+            )}
+            {/* Participants Panel (Floating Card) */}
+            {showParticipants && (
+              <HostParticipantsPanel
+                roomId={roomId}
+                onClose={() => setShowParticipants(false)}
                 className="fixed top-8 right-8 z-40"
               />
             )}

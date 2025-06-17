@@ -141,9 +141,9 @@ export default function HostParticipantsPanel({ roomId, onClose, className }: Ho
           </div>
         </div>
 
-        {/* Participants List */}
+        {/* Participants List - Always show all participants */}
         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-          {!allCanEdit && participants.map((p) => (
+          {participants.map((p) => (
             <div key={p.userId} className="flex items-center justify-between p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/30 hover:bg-zinc-800 transition-colors">
               <div className="flex items-center gap-3">
                 <div className={`w-9 h-9 rounded-full ${p.userId === userId ? 'bg-gradient-to-br from-purple-500 to-blue-500 ring-2 ring-green-400' : 'bg-blue-500'} flex items-center justify-center text-white font-bold shadow-md`}>
@@ -156,7 +156,7 @@ export default function HostParticipantsPanel({ roomId, onClose, className }: Ho
                       <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-medium">You</span>
                     )}
                   </div>
-                  {p.userId !== userId && (
+                  {!allCanEdit && p.userId !== userId && (
                     <div className="text-xs text-zinc-400 mt-0.5">
                       {!!userPermissions[p.userId] ? 'Can edit code' : 'View only'}
                     </div>
@@ -164,7 +164,7 @@ export default function HostParticipantsPanel({ roomId, onClose, className }: Ho
                 </div>
               </div>
 
-              {p.userId !== userId && (
+              {!allCanEdit && p.userId !== userId && (
                 <div className="flex items-center">
                   <label htmlFor={`allow-${p.userId}`} className="relative inline-flex items-center cursor-pointer">
                     <input
