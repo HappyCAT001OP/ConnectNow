@@ -99,7 +99,7 @@ const MeetingRoom = () => {
     <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Main Content Area */}
+` ```        {/* Main Content Area */}
         <div className={cn("flex flex-1 flex-col transition-all duration-300 w-full")}> // removed 'pr-[340px]' logic
           {/* Tab Navigation - Auto-hide with controls */}
           <div className={cn("flex justify-between items-center px-6 py-3 bg-zinc-900/60 border-b border-zinc-800/50 transition-opacity duration-300", {
@@ -154,9 +154,9 @@ const MeetingRoom = () => {
           </div>
           
           {/* Main Content */}
-          <div className={cn("relative flex size-full items-center justify-center")}> // removed 'pr-[340px]' logic
+          <div className={cn("relative flex-1 flex items-center justify-center min-h-0 min-w-0")}> // ensure full area is used for video/placeholder
             {activeTab === 'codeshare' ? (
-              <div className="flex size-full items-center relative">
+              <div className="flex-1 flex items-center justify-center relative min-h-0 min-w-0">
                 <CodeShare roomId={roomId} />
               </div>
             ) : (
