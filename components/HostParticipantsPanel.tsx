@@ -27,10 +27,10 @@ export default function HostParticipantsPanel({ roomId, onClose, className }: Ho
 
   // Get participants from call.state.members
   const participants: Participant[] = call
-    ? Object.values(call.state.members).map((m: any) => ({
-        userId: m.user.id,
-        name: m.user.name,
-        username: m.user.name,
+    ? Object.values(call.state.members || {}).map((m: any) => ({
+        userId: m.user?.id,
+        name: m.user?.name || 'Unknown',
+        username: m.user?.name || 'Unknown',
       }))
     : [];
 
