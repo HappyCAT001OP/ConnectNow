@@ -8,7 +8,7 @@ import {
   SpeakerLayout,
   useCallStateHooks,
 } from '@stream-io/video-react-sdk';
-import { LayoutList, Users, Maximize, Minimize } from 'lucide-react';
+import { LayoutList, Users } from 'lucide-react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import ChatSidebar from './ChatSidebar';
@@ -35,14 +35,14 @@ const MeetingRoom = () => {
   const roomId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const isPersonalRoom = false; // Adjust if you have personal room logic elsewhere
   const router = useRouter();
+
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
-  const [showParticipants, setShowParticipants] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(true); // Set to true by default to show participants
   const { useCallCallingState } = useCallStateHooks();
   const [activeTab, setActiveTab] = useState<'video' | 'whiteboard' | 'codeshare'>('video');
   const [showChat, setShowChat] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // for more detail about types of CallingState see: https://getstream-io/video-react-sdk/calling-state
@@ -50,18 +50,6 @@ const MeetingRoom = () => {
 
   const { user } = useUser();
   const isHost = user?.id === roomId; // Replace with real host logic
-
-  // Define CallLayout before any conditional returns
-  const CallLayout = () => {
-    switch (layout) {
-      case 'grid':
-        return <PaginatedGridLayout />;
-      case 'speaker-right':
-        return <SpeakerLayout participantsBarPosition="left" />;
-      default:
-        return <SpeakerLayout participantsBarPosition="right" />;
-    }
-  };
 
   // Auto-hide controls when mouse is inactive
   useEffect(() => {
@@ -95,47 +83,38 @@ const MeetingRoom = () => {
     };
   }, []);
 
-  // Handle fullscreen toggle
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(err => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().then(() => {
-          setIsFullscreen(false);
-        }).catch(err => {
-          console.error(`Error attempting to exit fullscreen: ${err.message}`);
-        });
-      }
+  if (callingState !== CallingState.JOINED) return <Loader />;
+
+  const CallLayout = () => {
+    switch (layout) {
+      case 'grid':
+        return <PaginatedGridLayout />;
+      case 'speaker-right':
+        return <SpeakerLayout participantsBarPosition="left" />;
+      default:
+        return <SpeakerLayout participantsBarPosition="right" />;
     }
   };
 
-  // Listen for fullscreen change events
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
-  if (callingState !== CallingState.JOINED) return <Loader />;
-
   return (
     <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
-      {/* Removed the fixed EndCallButton from the middle of the screen */}
-      <div className={cn("flex flex-1 overflow-hidden relative", {
-        'pr-[340px]': showChat // Add padding to the main container when chat is open
-      })}>
-        {/* Main Content Area */}
+
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Participants Panel - Always visible on the left side */}
+        <div className="w-[280px] bg-zinc-900 border-r border-zinc-800/50 overflow-y-auto">
+          <div className="p-4 border-b border-zinc-800/50">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Users size={18} className="text-blue-400" />
+              Participants
+            </h3>
+            <p className="text-sm text-zinc-400 mt-1">People in the meeting</p>
+          </div>
+          <div className="p-2">
+            <CallParticipantsList />
+          </div>
+        </div>
+
+         {/* Main Content Area */}
         <div className="flex flex-1 flex-col transition-all duration-300 w-full">
           {/* Tab Navigation - Auto-hide with controls */}
           <div className={cn("flex justify-between items-center px-6 py-3 bg-zinc-900/60 border-b border-zinc-800/50 transition-opacity duration-300", {
@@ -206,35 +185,25 @@ const MeetingRoom = () => {
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
               <MeetingDetailsPanel
-                roomId={roomId}
+                meetingId={roomId}
                 onClose={() => setShowDetails(false)}
                 className="fixed top-8 right-8 z-40"
               />
             )}
-            {showParticipants && (
-              <HostParticipantsPanel
-                roomId={roomId}
-                onClose={() => setShowParticipants(false)}
-                className={cn("fixed top-8 z-40", {
-                  'right-[370px]': showChat,
-                  'right-8': !showChat
-                })}
-              />
-            )}
             {showChat && (
               <ChatSidebar
-                roomId={roomId}
+                meetingId={roomId}
                 onClose={() => setShowChat(false)}
                 className="fixed top-0 right-0 h-full z-50"
               />
             )}
+            <EndCallButton className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50" />
           </div>
           
           {/* Control Bar - Auto-hide */}
           <div className={cn("fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-4 z-40 transition-transform duration-300", {
             'translate-y-24': !showControls,
-            'translate-y-0': showControls,
-            'pr-[340px]': showChat // Add padding to the right when chat is open
+            'translate-y-0': showControls
           })}>
             <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-800/50 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
               {/* Call Controls */}
@@ -276,31 +245,25 @@ const MeetingRoom = () => {
                 <CallStatsButton />
               </div>
               
-              {/* Fullscreen Button */}
-              <button 
-                onClick={toggleFullscreen}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/70 text-zinc-200 hover:bg-zinc-700/70 transition-colors"
-              >
-                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-                <span className="text-sm font-medium">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
-              </button>
-              
-              {/* Participants Button */}
-              <button 
-                onClick={() => setShowParticipants((prev) => !prev)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${showParticipants ? 'bg-blue-600/30 text-blue-400' : 'bg-zinc-800/70 text-zinc-200 hover:bg-zinc-700/70'} transition-colors`}
-              >
-                <Users size={18} />
-                <span className="text-sm font-medium">Participants</span>
-              </button>
-              
               {/* End Call Button */}
               {!isPersonalRoom && <EndCallButton />}
             </div>
           </div>
         </div>
         
-        {/* Remove duplicate ChatSidebar */}
+        {/* Chat Sidebar - Positioned absolutely to avoid overlap */}
+        {showChat && (
+          <div className="absolute right-0 top-0 h-full w-[340px] transition-all duration-300 z-30">
+            <ChatSidebar />
+            <button
+              onClick={() => setShowChat(false)}
+              className="absolute top-4 left-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Close Chat
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

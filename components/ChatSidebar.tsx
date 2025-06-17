@@ -49,31 +49,9 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
       yarrayRef.current = ydocRef.current.getArray('messages');
     }
 
-    // Initialize WebSocket provider with better error handling
+    // Initialize WebSocket provider
     if (!providerRef.current) {
-      const wsUrl = process.env.NEXT_PUBLIC_YJS_URL || 'ws://localhost:1234';
-      console.log(`Connecting to WebSocket server at ${wsUrl} for room ${roomId}-chat`);
-      
-      try {
-        providerRef.current = new WebsocketProvider(wsUrl, roomId + '-chat', ydocRef.current!);
-        
-        // Add status event listener
-        providerRef.current.on('status', (event: any) => {
-          console.log(`WebSocket connection status: ${event.status}`);
-        });
-        
-        // Add connection error handler
-        providerRef.current.on('connection-error', (error: any) => {
-          console.error('WebSocket connection error:', error);
-        });
-        
-        // Add connection close handler
-        providerRef.current.on('connection-close', (event: any) => {
-          console.log('WebSocket connection closed:', event);
-        });
-      } catch (error) {
-        console.error('Error initializing WebSocket provider:', error);
-      }
+      providerRef.current = new WebsocketProvider(process.env.NEXT_PUBLIC_YJS_URL!, roomId + '-chat', ydocRef.current!);
     }
 
     // Listen for message changes
@@ -102,24 +80,8 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
   }, [roomId]);
 
   const sendMessage = (msg: Partial<ChatMessage>) => {
-    if (!yarrayRef.current) {
-      console.error('Cannot send message: Yjs array not initialized');
-      alert('Cannot send message. Please try refreshing the page.');
-      return;
-    }
-    
-    try {
-      const messageObj = { id: crypto.randomUUID(), user: username, userId, ...msg, time: Date.now() };
-      console.log('Sending message:', messageObj);
-      yarrayRef.current.push([messageObj]);
-      
-      // Force update messages state to ensure UI reflects the change
-      setMessages(prev => [...prev, messageObj]);
-      setInput('');
-    } catch (error) {
-      console.error('Error sending message:', error);
-      alert('Failed to send message. Please try again.');
-    }
+    yarrayRef.current?.push([{ id: crypto.randomUUID(), user: username, userId, ...msg, time: Date.now() }]);
+    setInput('');
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,24 +92,10 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
     }
     console.log("File selected for upload:", selectedFile.name);
 
-    // Show loading indicator or message
-    const loadingMessage = { 
-      id: 'loading-' + Date.now(), 
-      user: username, 
-      userId, 
-      text: `Uploading ${selectedFile.name}...`, 
-      time: Date.now() 
-    };
-    
-    // Add temporary loading message to UI
-    setMessages(prev => [...prev, loadingMessage]);
-
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
     if (!cloudName || !uploadPreset) {
-      // Remove loading message
-      setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id));
       alert("Cloudinary configuration missing. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET environment variables.");
       console.error("Cloudinary configuration missing.");
       return;
@@ -235,35 +183,13 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
       const dbFileData = await dbResponse.json();
       console.log("File metadata stored:", dbFileData);
 
-      // Remove loading message
-      setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id));
-
-      // Create file message
-      const fileMessage = { 
-        id: crypto.randomUUID(), 
-        user: username, 
-        userId, 
-        fileUrl, 
-        fileName, 
-        fileId: dbFileData.id, 
-        time: Date.now() 
-      };
-
-      // Update UI immediately
-      setMessages(prev => [...prev, fileMessage]);
-
-      // Send message with file details to Yjs
-      if (yarrayRef.current) {
-        yarrayRef.current.push([fileMessage]);
-        console.log("File chat message sent to Yjs.");
-      } else {
-        console.error("Cannot send file message: Yjs array not initialized");
-      }
+      // Send message with file details
+      // Use the database-generated id from the File model for the message's fileId reference
+      // This ensures the Message model correctly references the File model's id field
+      sendMessage({ fileUrl, fileName, fileId: dbFileData.id });
+      console.log("File chat message sent.");
 
     } catch (error: any) {
-      // Remove loading message
-      setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id));
-      
       console.error("File upload process failed:", error);
       // Create a more user-friendly error message
       const errorMessage = error.message || 'Unknown error occurred';
