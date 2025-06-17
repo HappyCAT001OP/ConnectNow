@@ -5,7 +5,11 @@ import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
 
-const EndCallButton = () => {
+interface EndCallButtonProps {
+  className?: string;
+}
+
+const EndCallButton = ({ className }: EndCallButtonProps) => {
   const call = useCall();
   const router = useRouter();
 
@@ -31,7 +35,7 @@ const EndCallButton = () => {
   };
 
   return (
-    <Button onClick={endCall} className="bg-red-500">
+    <Button onClick={endCall} className={`bg-red-500 ${className || ''}`}>
       End call for everyone
     </Button>
   );

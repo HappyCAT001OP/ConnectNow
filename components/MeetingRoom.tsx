@@ -131,7 +131,7 @@ const MeetingRoom = () => {
 
   return (
     <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
-
+      {/* Removed the fixed EndCallButton from the middle of the screen */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Main Content Area */}
         <div className="flex flex-1 flex-col transition-all duration-300 w-full">
@@ -204,7 +204,7 @@ const MeetingRoom = () => {
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
               <MeetingDetailsPanel
-                meetingId={roomId}
+                roomId={roomId}
                 onClose={() => setShowDetails(false)}
                 className="fixed top-8 right-8 z-40"
               />
@@ -218,12 +218,11 @@ const MeetingRoom = () => {
             )}
             {showChat && (
               <ChatSidebar
-                meetingId={roomId}
+                roomId={roomId}
                 onClose={() => setShowChat(false)}
                 className="fixed top-0 right-0 h-full z-50"
               />
             )}
-            <EndCallButton className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50" />
           </div>
           
           {/* Control Bar - Auto-hide */}
@@ -298,7 +297,7 @@ const MeetingRoom = () => {
         {/* Chat Sidebar - Positioned absolutely to avoid overlap */}
         {showChat && (
           <div className="absolute right-0 top-0 h-full w-[340px] transition-all duration-300 z-30">
-            <ChatSidebar meetingId={roomId} />
+            <ChatSidebar roomId={roomId} />
             <button
               onClick={() => setShowChat(false)}
               className="absolute top-4 left-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"

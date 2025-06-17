@@ -6,14 +6,15 @@ import React from 'react';
 interface MeetingDetailsPanelProps {
   roomId: string;
   onClose?: () => void; // Optional function to close the panel (e.g., for a modal)
-  hostName: string;
-  meetingStartTime: string;
+  hostName?: string;
+  meetingStartTime?: string;
+  className?: string;
 }
 
-const MeetingDetailsPanel: React.FC<MeetingDetailsPanelProps> = ({ roomId, onClose, hostName, meetingStartTime }) => {
+const MeetingDetailsPanel: React.FC<MeetingDetailsPanelProps> = ({ roomId, onClose, hostName, meetingStartTime, className }) => {
 
   return (
-    <div className="bg-zinc-900 text-white rounded-2xl shadow-xl border border-zinc-700/50 overflow-hidden">
+    <div className={`bg-zinc-900 text-white rounded-2xl shadow-xl border border-zinc-700/50 overflow-hidden ${className || ''}`}>
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600/20 to-green-500/20 border-b border-zinc-700/50 px-6 py-4">
         <div className="flex items-center justify-between mb-2">
