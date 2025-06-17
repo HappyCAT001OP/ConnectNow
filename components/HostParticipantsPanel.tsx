@@ -12,9 +12,11 @@ interface Participant {
 
 interface HostParticipantsPanelProps {
   roomId: string;
+  onClose?: () => void;
+  className?: string;
 }
 
-export default function HostParticipantsPanel({ roomId }: HostParticipantsPanelProps) {
+export default function HostParticipantsPanel({ roomId, onClose, className }: HostParticipantsPanelProps) {
   const call = useCall();
   const { user } = useUser();
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
@@ -83,7 +85,7 @@ export default function HostParticipantsPanel({ roomId }: HostParticipantsPanelP
   };
 
   return (
-    <div className="bg-zinc-900 text-white rounded-2xl shadow-xl border border-zinc-700/50 overflow-hidden">
+    <div className={`bg-zinc-900 text-white rounded-2xl shadow-xl border border-zinc-700/50 overflow-hidden ${className}`}>
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600/20 to-blue-500/20 border-b border-zinc-700/50 px-6 py-4">
         <div className="flex items-center justify-between mb-2">
