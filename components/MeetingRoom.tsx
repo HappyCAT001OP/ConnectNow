@@ -8,7 +8,7 @@ import {
   SpeakerLayout,
   useCallStateHooks,
 } from '@stream-io/video-react-sdk';
-import { LayoutList, Users } from 'lucide-react';
+import { LayoutList, Users, Maximize, Minimize } from 'lucide-react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import ChatSidebar from './ChatSidebar';
@@ -42,6 +42,7 @@ const MeetingRoom = () => {
   const [showChat, setShowChat] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // for more detail about types of CallingState see: https://getstream-io/video-react-sdk/calling-state
@@ -94,6 +95,38 @@ const MeetingRoom = () => {
         return <SpeakerLayout participantsBarPosition="right" />;
     }
   };
+
+  // Handle fullscreen toggle
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => {
+          setIsFullscreen(false);
+        }).catch(err => {
+          console.error(`Error attempting to exit fullscreen: ${err.message}`);
+        });
+      }
+    }
+  };
+
+  // Listen for fullscreen change events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   return (
     <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
@@ -236,6 +269,15 @@ const MeetingRoom = () => {
               <div className="flex items-center">
                 <CallStatsButton />
               </div>
+              
+              {/* Fullscreen Button */}
+              <button 
+                onClick={toggleFullscreen}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/70 text-zinc-200 hover:bg-zinc-700/70 transition-colors"
+              >
+                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+                <span className="text-sm font-medium">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+              </button>
               
               {/* Participants Button */}
               <button 
