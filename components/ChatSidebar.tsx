@@ -1,383 +1,439 @@
-import { useUser } from '@clerk/nextjs';
-import { useCall } from '@stream-io/video-react-sdk';
-import { useParams } from 'next/navigation';
-import React, { useEffect, useRef, useState } from 'react';
-import { WebsocketProvider } from 'y-websocket';
-import * as Y from 'yjs';
+'use client';
 
-// Define ChatMessage type
-interface ChatMessage {
+import { useEffect, useRef, useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { cn } from '@/lib/utils';
+import { useUser } from '@clerk/nextjs';
+import { useCallStateHooks } from '@stream-io/video-react-sdk';
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { format } from 'date-fns';
+import { Loader2, Upload, X } from 'lucide-react';
+
+type Message = {
   id: string;
-  user: string;
-  userId: string;
-  text?: string;
-  fileUrl?: string;
-  fileName?: string;
-  fileId?: string;
-  time: number;
-}
+  text: string;
+  user: {
+    name: string;
+    id: string;
+    image?: string;
+  };
+  createdAt: Date;
+  isHost?: boolean;
+  file?: {
+    url: string;
+    name: string;
+    publicId: string;
+  };
+};
 
 interface ChatSidebarProps {
-  roomId?: string;
-  meetingId?: string;
-  onClose?: () => void;
+  roomId: string;
+  onClose: () => void;
   className?: string;
 }
 
-export default function ChatSidebar({ roomId, meetingId, onClose, className }: ChatSidebarProps) {
-  const { user } = useUser();
-  const call = useCall();
-  const params = useParams();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+const ChatSidebar = ({ roomId, onClose, className }: ChatSidebarProps) => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const ydocRef = useRef<Y.Doc | null>(null);
-  const providerRef = useRef<WebsocketProvider | null>(null);
-  const yarrayRef = useRef<Y.Array<any> | null>(null);
-  const dropRef = useRef<HTMLDivElement | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+  const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-
-  // Get the room ID from props or params
-  const chatRoomId = roomId || meetingId || (typeof params.id === 'string' ? params.id : '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const userId = user?.id || 'unknown';
-  const username = user?.username || user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User';
-  const hostId = call?.state?.createdBy?.id;
+  const { useCall } = useCallStateHooks();
+  const call = useCall();
+  const { user } = useUser();
 
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() => {
-    if (!chatRoomId) return;
-
-    // Initialize Yjs document
-    if (!ydocRef.current) {
-      ydocRef.current = new Y.Doc();
-      yarrayRef.current = ydocRef.current.getArray('messages');
+  // Scroll to the latest message
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-
-    // Initialize WebSocket provider
-    if (!providerRef.current) {
-      const wsUrl = process.env.NEXT_PUBLIC_YJS_URL || 'wss://demos.yjs.dev';
-      providerRef.current = new WebsocketProvider(wsUrl, chatRoomId + '-chat', ydocRef.current!);
-      
-      // Add connection status handlers
-      providerRef.current.on('status', (event: { status: string }) => {
-        console.log('WebSocket connection status:', event.status);
-      });
-    }
-
-    // Listen for message changes
-    const updateMessages = () => {
-      if (yarrayRef.current) {
-        const newMessages = yarrayRef.current.toArray();
-        console.log('Messages updated:', newMessages);
-        setMessages(newMessages);
-      }
-    };
-    
-    if (yarrayRef.current) {
-      yarrayRef.current.observe(updateMessages);
-      updateMessages(); // Initial load
-    }
-
-    // Cleanup
-    return () => {
-      if (yarrayRef.current) {
-        yarrayRef.current.unobserve(updateMessages);
-      }
-      if (providerRef.current) {
-        providerRef.current.destroy();
-        providerRef.current = null;
-      }
-      if (ydocRef.current) {
-        ydocRef.current.destroy();
-        ydocRef.current = null;
-      }
-    };
-  }, [chatRoomId]);
-
-  const sendMessage = (msg: Partial<ChatMessage>) => {
-    if (!yarrayRef.current) {
-      console.error('Cannot send message: Yjs array not initialized');
-      return;
-    }
-    
-    const newMessage = { 
-      id: crypto.randomUUID(), 
-      user: username, 
-      userId, 
-      ...msg, 
-      time: Date.now() 
-    };
-    
-    console.log('Sending message:', newMessage);
-    yarrayRef.current.push([newMessage]);
-    setInput('');
   };
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) {
-      console.log("No file selected.");
-      return;
-    }
-    console.log("File selected for upload:", selectedFile.name);
-    
-    setIsUploading(true);
-
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-    if (!cloudName || !uploadPreset) {
-      alert("Cloudinary configuration missing. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET environment variables.");
-      console.error("Cloudinary configuration missing.");
-      setIsUploading(false);
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('upload_preset', uploadPreset);
+  // Initialize Yjs document and WebSocket provider
+  useEffect(() => {
+    if (!roomId) return;
 
     try {
-      console.log("Attempting to upload file to Cloudinary...");
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-        method: 'POST',
-        body: formData,
+      const doc = new Y.Doc();
+      setYdoc(doc);
+
+      // Connect to the WebSocket server
+      const wsProvider = new WebsocketProvider(
+        'wss://demos.yjs.dev', // Use your WebSocket server URL
+        `connectnow-chat-${roomId}`,
+        doc
+      );
+
+      wsProvider.on('status', (event: { status: string }) => {
+        if (event.status === 'connected') {
+          setConnectionStatus('connected');
+          console.log('Connected to WebSocket server');
+        } else {
+          setConnectionStatus(event.status === 'connecting' ? 'connecting' : 'disconnected');
+        }
       });
 
-      if (!response.ok) {
-        let errorDetails = response.statusText;
-        try {
-          const errorData = await response.json();
-          errorDetails = errorData.error?.message || JSON.stringify(errorData);
-        } catch (jsonError) {
-           const responseText = await response.text();
-           errorDetails = `Status: ${response.status}, Raw Response: ${responseText}`;
-           console.error("Failed to parse Cloudinary error response as JSON:", jsonError, "Raw response text:", responseText);
+      wsProvider.on('connection-error', (error) => {
+        console.error('WebSocket connection error:', error);
+        setConnectionStatus('disconnected');
+      });
+
+      setProvider(wsProvider);
+
+      // Get the messages array from the Yjs document
+      const yarray = doc.getArray<any>('messages');
+
+      // Observe changes to the messages array
+      yarray.observe((event) => {
+        // Convert Yjs array to regular array of messages
+        const messagesArray = yarray.toArray().map((item) => ({
+          id: item.id,
+          text: item.text,
+          user: item.user,
+          createdAt: new Date(item.createdAt),
+          isHost: item.isHost,
+          file: item.file,
+        }));
+
+        setMessages(messagesArray);
+        // Scroll to bottom when new messages arrive
+        setTimeout(scrollToBottom, 100);
+      });
+
+      // Initial load of messages
+      const initialMessages = yarray.toArray().map((item) => ({
+        id: item.id,
+        text: item.text,
+        user: item.user,
+        createdAt: new Date(item.createdAt),
+        isHost: item.isHost,
+        file: item.file,
+      }));
+
+      setMessages(initialMessages);
+      setTimeout(scrollToBottom, 100);
+
+      return () => {
+        wsProvider.disconnect();
+        doc.destroy();
+      };
+    } catch (error) {
+      console.error('Error initializing Yjs:', error);
+      setConnectionStatus('disconnected');
+    }
+  }, [roomId]);
+
+  // Send a message
+  const sendMessage = (text: string, file?: { url: string; name: string; publicId: string }) => {
+    if ((!text || text.trim() === '') && !file) return;
+    
+    if (!ydoc || !provider || !user) {
+      console.error('Cannot send message: missing ydoc, provider, or user');
+      return;
+    }
+
+    try {
+      const yarray = ydoc.getArray<any>('messages');
+      const message: Message = {
+        id: crypto.randomUUID(),
+        text: text.trim(),
+        user: {
+          name: user.fullName || user.username || 'Anonymous',
+          id: user.id,
+          image: user.imageUrl,
+        },
+        createdAt: new Date(),
+        isHost: call?.createdBy?.id === user.id,
+        file,
+      };
+
+      // Add the message to the Yjs array
+      yarray.push([message]);
+      setInput('');
+      scrollToBottom();
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  // Handle file selection
+  const handleFile = async (file: File) => {
+    if (!file) return;
+    
+    setIsUploading(true);
+    
+    try {
+      // Create FormData for upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
+      
+      // Upload to Cloudinary
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
+        {
+          method: 'POST',
+          body: formData,
         }
-        console.error("Cloudinary upload failed:", response.status, errorDetails);
-        throw new Error(`Cloudinary upload failed: ${errorDetails}`);
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed with status: ${response.status}`);
       }
-
-      let fileData;
-      try {
-         fileData = await response.json();
-         console.log("Cloudinary upload successful:", fileData);
-      } catch (jsonError) {
-          const responseText = await response.text();
-          console.error("Failed to parse Cloudinary success response as JSON:", jsonError, "Raw response text:", responseText);
-          throw new Error(`Cloudinary upload returned non-JSON response. Raw response: ${responseText}`);
+      
+      const data = await response.json();
+      
+      // Send a message with the file
+      sendMessage(
+        `Shared a file: ${file.name}`,
+        {
+          url: data.secure_url,
+          name: file.name,
+          publicId: data.public_id,
+        }
+      );
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-
-      const fileUrl = fileData.secure_url; // Use secure_url for HTTPS
-      const fileName = fileData.original_filename || selectedFile.name;
-      const fileId = fileData.public_id; // Using Cloudinary's public_id as fileId
-
-      // Send message with file details directly without storing in database
-      sendMessage({ fileUrl, fileName, fileId });
-      console.log("File chat message sent.");
-
-    } catch (error: any) {
-      console.error("File upload process failed:", error);
-      alert(`File upload failed: ${error.message || 'Unknown error occurred'}`);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Failed to upload file. Please try again.');
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Drag-and-drop handlers
+  // Drag and drop handlers
   useEffect(() => {
-    const dropArea = dropRef.current;
-    if (!dropArea) return;
-
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
       setIsDragging(true);
     };
+
     const handleDragLeave = (e: DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
     };
+
     const handleDrop = (e: DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
+      
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        const file = e.dataTransfer.files[0];
-        // Reuse handleFile logic
-        const inputEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
-        handleFile(inputEvent);
+        handleFile(e.dataTransfer.files[0]);
       }
     };
-    dropArea.addEventListener('dragover', handleDragOver);
-    dropArea.addEventListener('dragleave', handleDragLeave);
-    dropArea.addEventListener('drop', handleDrop);
+
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('drop', handleDrop);
+
     return () => {
-      dropArea.removeEventListener('dragover', handleDragOver);
-      dropArea.removeEventListener('dragleave', handleDragLeave);
-      dropArea.removeEventListener('drop', handleDrop);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('drop', handleDrop);
     };
   }, []);
 
   return (
-    <aside 
-      ref={dropRef} 
-      className={`w-[340px] bg-zinc-900/95 backdrop-blur-md text-white h-screen border-l border-zinc-800/50 flex flex-col font-sans transition-all ${isDragging ? 'ring-2 ring-blue-400/70' : ''} ${className || ''}`}
+    <div
+      className={cn(
+        'flex h-full w-80 flex-col border-l border-zinc-700 bg-zinc-900',
+        className
+      )}
     >
-      <div className="px-5 py-4 border-b border-zinc-800/50 bg-zinc-950/70 flex items-center justify-between">
-        <h2 className="font-bold text-lg tracking-wide m-0 bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-blue-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          Chat
-        </h2>
-        {onClose && (
-          <button
+      {/* Chat Header */}
+      <div className="flex items-center justify-between border-b border-zinc-700 px-4 py-2">
+        <h2 className="text-xl font-semibold text-zinc-50">Chat</h2>
+        <div className="flex items-center gap-2">
+          {connectionStatus !== 'connected' && (
+            <div className="flex items-center gap-1 text-xs text-amber-400">
+              <Loader2 size={12} className="animate-spin" />
+              {connectionStatus === 'connecting' ? 'Connecting...' : 'Reconnecting...'}
+            </div>
+          )}
+          <Button
             onClick={onClose}
-            className="ml-2 px-3 py-1.5 rounded-full bg-zinc-800/80 text-zinc-200 border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 rounded-full"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            Close Chat
-          </button>
-        )}
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 bg-zinc-900/70 space-y-4">
-        {isDragging && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none rounded-lg border-2 border-dashed border-blue-400/50">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-blue-400 mb-2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            <span className="text-lg font-bold text-blue-300">Drop file to upload</span>
-          </div>
-        )}
-        
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-40 text-center p-6 rounded-xl bg-zinc-800/30 border border-zinc-700/30">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-zinc-500 mb-2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <p className="text-zinc-500 text-sm">No messages yet</p>
-            <p className="text-zinc-600 text-xs mt-1">Be the first to send a message!</p>
-          </div>
-        )}
-        
-        {messages.map((msg, idx) => (
-          <div 
-            key={msg.id} 
-            className={`flex items-start gap-3 rounded-xl p-3 transition-all ${msg.userId === userId ? 'bg-blue-600/10 border border-blue-500/20' : 'bg-zinc-800/50 border border-zinc-700/30'}`}
-          >
-            <div 
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${msg.userId === userId ? 'bg-blue-500 text-white' : 'bg-zinc-700 text-zinc-200'} ${msg.userId === hostId ? 'ring-2 ring-green-400' : ''}`}
-            >
-              {msg.user?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1 mb-1">
-                <span className={`font-medium text-sm ${msg.userId === userId ? 'text-blue-400' : 'text-zinc-300'}`}>
-                  {msg.user || 'User'}
-                </span>
-                {msg.userId === hostId && (
-                  <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full font-medium">
-                    HOST
-                  </span>
-                )}
-                <span className="ml-auto text-[10px] text-zinc-500">{new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-              </div>
-              
-              {msg.text && (
-                <div className="text-sm text-zinc-200 break-words">{msg.text}</div>
-              )}
-              
-              {msg.fileUrl && (
-                <div className="mt-2 p-2 rounded-lg bg-zinc-800/70 border border-zinc-700/50 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-blue-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-                    <polyline points="13 2 13 9 20 9"/>
-                  </svg>
-                  <a 
-                    href={msg.fileUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-blue-400 text-xs font-medium hover:underline truncate"
-                  >
-                    {msg.fileName || 'File'}
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      
-      <form 
-        className="flex flex-col gap-3 p-4 border-t border-zinc-800/50 bg-zinc-950/70 backdrop-blur-sm sticky bottom-0 z-10" 
-        onSubmit={e => { 
-          e.preventDefault(); 
-          if (input.trim()) {
-            sendMessage({ text: input });
-          }
-        }}
-      >
-        <div className="relative">
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="Type a message..."
-            className="w-full p-3 rounded-xl bg-zinc-800/70 text-white text-sm border border-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all pr-10"
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || isUploading}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
+            <X className="h-5 w-5" />
+          </Button>
         </div>
-        
-        <div className="flex justify-between items-center">
-          <label
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-200 cursor-pointer text-sm font-medium transition-colors border border-zinc-700/30 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* Drag overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/90 z-10">
+            <div className="rounded-lg border-2 border-dashed border-zinc-700 p-8 text-center">
+              <Upload className="mx-auto h-10 w-10 text-zinc-500" />
+              <p className="mt-2 text-sm text-zinc-400">Drop your file to share</p>
+            </div>
+          </div>
+        )}
+
+        {/* Message list */}
+        {messages.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-center text-sm text-zinc-500">
+              No messages yet. Start the conversation!
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages.map((message) => (
+              <div key={message.id} className="flex items-start gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={message.user.image} />
+                  <AvatarFallback className="bg-zinc-800 text-zinc-50">
+                    {message.user.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-zinc-50">
+                      {message.user.name}
+                    </p>
+                    {message.isHost && (
+                      <span className="rounded bg-zinc-800 px-1 py-0.5 text-xs text-zinc-400">
+                        Host
+                      </span>
+                    )}
+                    <span className="text-xs text-zinc-500">
+                      {format(message.createdAt, 'h:mm a')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-zinc-300">{message.text}</p>
+                  {message.file && (
+                    <div className="mt-2 rounded-lg bg-zinc-800 p-2">
+                      <a
+                        href={message.file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        {message.file.name}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          sendMessage(input);
+        }}
+        className="border-t border-zinc-700 p-4"
+      >
+        <div className="flex gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1 bg-zinc-800 border-zinc-700 text-zinc-100"
+            disabled={connectionStatus !== 'connected' || isUploading}
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+              }
+            }}
+            className="hidden"
+            accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 shrink-0 border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-100"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={connectionStatus !== 'connected' || isUploading}
           >
             {isUploading ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Uploading...</span>
-              </>
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                <span>Attach File</span>
-              </>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
             )}
-            <input
-              type="file"
-              onChange={handleFile}
-              disabled={isUploading}
-              className="hidden"
-            />
-          </label>
-          
-          <p className="text-xs text-zinc-500">Drag & drop files here</p>
+          </Button>
+          <Button
+            type="submit"
+            className="h-10 w-10 shrink-0"
+            size="icon"
+            disabled={(!input || input.trim() === '') || connectionStatus !== 'connected' || isUploading}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </Button>
         </div>
+        <p className="mt-2 text-center text-xs text-zinc-500">
+          Drag and drop files to share them
+        </p>
       </form>
-    </aside>
+    </div>
   );
-}
+};
+
+export default ChatSidebar;

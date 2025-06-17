@@ -16,10 +16,9 @@ import CodeShare from './CodeShare';
 import Whiteboard from './Whiteboard';
 import { cn } from '@/lib/utils';
 import { useUser } from '@clerk/nextjs';
-import EndCallButton from './EndCallButton';
-import HostParticipantsPanel from './HostParticipantsPanel';
 import Loader from './Loader';
 import MeetingDetailsPanel from './MeetingDetailsPanel';
+import HostParticipantsPanel from './HostParticipantsPanel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,8 +36,8 @@ const MeetingRoom = () => {
   const router = useRouter();
 
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
-  const [showParticipants, setShowParticipants] = useState(false); // Changed to false by default
-  const { useCallCallingState } = useCallStateHooks();
+  const [showParticipants, setShowParticipants] = useState(false);
+  const { useCallCallingState, useCallState } = useCallStateHooks();
   const [activeTab, setActiveTab] = useState<'video' | 'whiteboard' | 'codeshare'>('video');
   const [showChat, setShowChat] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -47,9 +46,10 @@ const MeetingRoom = () => {
 
   // for more detail about types of CallingState see: https://getstream-io/video-react-sdk/calling-state
   const callingState = useCallCallingState();
+  const call = useCallState();
 
   const { user } = useUser();
-  const isHost = user?.id === roomId; // Replace with real host logic
+  const isHost = user?.id === call?.createdBy?.id; // Check if current user is the host
 
   // Auto-hide controls when mouse is inactive
   useEffect(() => {
@@ -152,7 +152,7 @@ const MeetingRoom = () => {
               </button>
               <button
                 onClick={() => setShowChat((prev) => !prev)}
-                className={"px-3 py-1.5 rounded-full bg-blue-600/90 text-white text-sm font-medium hover:bg-blue-700/90 transition-colors flex items-center gap-2 border border-blue-500/50"}
+                className={`px-3 py-1.5 rounded-full ${showChat ? 'bg-blue-600/90 text-white border-blue-500/50' : 'bg-zinc-800/80 text-zinc-200 border-zinc-700/50'} text-sm font-medium hover:bg-blue-700/90 transition-colors flex items-center gap-2 border`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 {showChat ? 'Close Chat' : 'Chat'}
@@ -161,9 +161,7 @@ const MeetingRoom = () => {
           </div>
           
           {/* Main Content */}
-          <div className={cn("relative flex size-full items-center justify-center", {
-            'pr-[340px]': showChat, // Add padding when chat is open to prevent overlap
-          })}>  
+          <div className="relative flex size-full items-center justify-center">
             {activeTab === 'codeshare' ? (
               <div className="flex size-full items-center relative">
                 <CodeShare roomId={roomId} />
@@ -191,12 +189,12 @@ const MeetingRoom = () => {
               />
             )}
             
-            {/* Chat Sidebar - Fixed position */}
+            {/* Chat Sidebar - Fixed position with higher z-index */}
             {showChat && (
               <ChatSidebar
                 roomId={roomId}
                 onClose={() => setShowChat(false)}
-                className="fixed top-0 right-0 h-full z-30"
+                className="fixed top-0 right-0 h-full z-50"
               />
             )}
           </div>
@@ -246,7 +244,7 @@ const MeetingRoom = () => {
                 <CallStatsButton />
               </div>
               
-              {/* End Call Button - Only in control bar */}
+              {/* End Call Button - Only show for host */}
               {!isPersonalRoom && isHost && (
                 <button 
                   onClick={async () => {
