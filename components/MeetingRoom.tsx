@@ -99,8 +99,8 @@ const MeetingRoom = () => {
     <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
 
       <div className="flex flex-1 overflow-hidden relative">
-` ```        {/* Main Content Area */}
-        <div className={cn("flex flex-1 flex-col transition-all duration-300 w-full")}> // removed 'pr-[340px]' logic
+        {/* Main Content Area */}
+        <div className={cn("flex flex-1 flex-col transition-all duration-300 w-full", { 'mr-[340px]': showChat })}> // add margin-right when chat is open
           {/* Tab Navigation - Auto-hide with controls */}
           <div className={cn("flex justify-between items-center px-6 py-3 bg-zinc-900/60 border-b border-zinc-800/50 transition-opacity duration-300", {
             'opacity-0 pointer-events-none': !showControls,
@@ -184,7 +184,7 @@ const MeetingRoom = () => {
               <ChatSidebar
                 roomId={roomId}
                 onClose={() => setShowChat(false)}
-                className="fixed top-0 right-0 h-full z-50"
+                className="fixed top-0 right-0 h-full z-50 w-[340px]"
               />
             )}
           </div>
