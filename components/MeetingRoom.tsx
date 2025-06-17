@@ -51,6 +51,18 @@ const MeetingRoom = () => {
   const { user } = useUser();
   const isHost = user?.id === roomId; // Replace with real host logic
 
+  // Define CallLayout before any conditional returns
+  const CallLayout = () => {
+    switch (layout) {
+      case 'grid':
+        return <PaginatedGridLayout />;
+      case 'speaker-right':
+        return <SpeakerLayout participantsBarPosition="left" />;
+      default:
+        return <SpeakerLayout participantsBarPosition="right" />;
+    }
+  };
+
   // Auto-hide controls when mouse is inactive
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -83,19 +95,6 @@ const MeetingRoom = () => {
     };
   }, []);
 
-  if (callingState !== CallingState.JOINED) return <Loader />;
-
-  const CallLayout = () => {
-    switch (layout) {
-      case 'grid':
-        return <PaginatedGridLayout />;
-      case 'speaker-right':
-        return <SpeakerLayout participantsBarPosition="left" />;
-      default:
-        return <SpeakerLayout participantsBarPosition="right" />;
-    }
-  };
-
   // Handle fullscreen toggle
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -127,6 +126,8 @@ const MeetingRoom = () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  if (callingState !== CallingState.JOINED) return <Loader />;
 
   return (
     <div className="flex h-screen w-full flex-col bg-gradient-to-b from-zinc-950 to-black overflow-hidden">
