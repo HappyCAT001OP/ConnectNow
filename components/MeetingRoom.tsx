@@ -190,14 +190,15 @@ const MeetingRoom = () => {
                 className="fixed top-8 right-8 z-40"
               />
             )}
+            
+            {/* Chat Sidebar - Fixed position */}
             {showChat && (
               <ChatSidebar
-                meetingId={roomId}
+                roomId={roomId}
                 onClose={() => setShowChat(false)}
-                className="fixed top-0 right-0 h-full z-50"
+                className="fixed top-0 right-0 h-full z-30"
               />
             )}
-            <EndCallButton className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50" />
           </div>
           
           {/* Control Bar - Auto-hide */}
@@ -245,25 +246,27 @@ const MeetingRoom = () => {
                 <CallStatsButton />
               </div>
               
-              {/* End Call Button */}
-              {!isPersonalRoom && <EndCallButton />}
+              {/* End Call Button - Only in control bar */}
+              {!isPersonalRoom && isHost && (
+                <button 
+                  onClick={async () => {
+                    if (call) {
+                      await call.endCall();
+                      router.push('/');
+                    }
+                  }} 
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
+                    <line x1="23" y1="1" x2="1" y2="23"/>
+                  </svg>
+                  End call for everyone
+                </button>
+              )}
             </div>
           </div>
         </div>
-        
-        {/* Chat Sidebar - Positioned absolutely to avoid overlap */}
-        {showChat && (
-          <div className="absolute right-0 top-0 h-full w-[340px] transition-all duration-300 z-30">
-            <ChatSidebar />
-            <button
-              onClick={() => setShowChat(false)}
-              className="absolute top-4 left-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              Close Chat
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

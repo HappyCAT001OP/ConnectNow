@@ -18,30 +18,40 @@ interface ChatMessage {
 }
 
 interface ChatSidebarProps {
-  roomId: string;
+  roomId?: string;
+  meetingId?: string;
   onClose?: () => void;
   className?: string;
 }
 
-export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarProps) {
+export default function ChatSidebar({ roomId, meetingId, onClose, className }: ChatSidebarProps) {
   const { user } = useUser();
   const call = useCall();
+  const params = useParams();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const yarrayRef = useRef<Y.Array<any> | null>(null);
   const dropRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
+  // Get the room ID from props or params
+  const chatRoomId = roomId || meetingId || (typeof params.id === 'string' ? params.id : '');
+  
   const userId = user?.id || 'unknown';
   const username = user?.username || user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User';
   const hostId = call?.state?.createdBy?.id;
 
-  // Removed Uploadthing hook
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!chatRoomId) return;
 
     // Initialize Yjs document
     if (!ydocRef.current) {
@@ -51,20 +61,34 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
 
     // Initialize WebSocket provider
     if (!providerRef.current) {
-      providerRef.current = new WebsocketProvider(process.env.NEXT_PUBLIC_YJS_URL!, roomId + '-chat', ydocRef.current!);
+      const wsUrl = process.env.NEXT_PUBLIC_YJS_URL || 'wss://demos.yjs.dev';
+      providerRef.current = new WebsocketProvider(wsUrl, chatRoomId + '-chat', ydocRef.current!);
+      
+      // Add connection status handlers
+      providerRef.current.on('status', (event: { status: string }) => {
+        console.log('WebSocket connection status:', event.status);
+      });
     }
 
     // Listen for message changes
     const updateMessages = () => {
-      setMessages(yarrayRef.current ? yarrayRef.current.toArray() : []);
+      if (yarrayRef.current) {
+        const newMessages = yarrayRef.current.toArray();
+        console.log('Messages updated:', newMessages);
+        setMessages(newMessages);
+      }
     };
+    
     if (yarrayRef.current) {
-      yarrayRef.current.observeDeep(updateMessages);
-      updateMessages();
+      yarrayRef.current.observe(updateMessages);
+      updateMessages(); // Initial load
     }
 
     // Cleanup
     return () => {
+      if (yarrayRef.current) {
+        yarrayRef.current.unobserve(updateMessages);
+      }
       if (providerRef.current) {
         providerRef.current.destroy();
         providerRef.current = null;
@@ -73,14 +97,25 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
         ydocRef.current.destroy();
         ydocRef.current = null;
       }
-      if (yarrayRef.current) {
-        yarrayRef.current.unobserveDeep(updateMessages);
-      }
     };
-  }, [roomId]);
+  }, [chatRoomId]);
 
   const sendMessage = (msg: Partial<ChatMessage>) => {
-    yarrayRef.current?.push([{ id: crypto.randomUUID(), user: username, userId, ...msg, time: Date.now() }]);
+    if (!yarrayRef.current) {
+      console.error('Cannot send message: Yjs array not initialized');
+      return;
+    }
+    
+    const newMessage = { 
+      id: crypto.randomUUID(), 
+      user: username, 
+      userId, 
+      ...msg, 
+      time: Date.now() 
+    };
+    
+    console.log('Sending message:', newMessage);
+    yarrayRef.current.push([newMessage]);
     setInput('');
   };
 
@@ -91,6 +126,8 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
       return;
     }
     console.log("File selected for upload:", selectedFile.name);
+    
+    setIsUploading(true);
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
@@ -98,6 +135,7 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
     if (!cloudName || !uploadPreset) {
       alert("Cloudinary configuration missing. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET environment variables.");
       console.error("Cloudinary configuration missing.");
+      setIsUploading(false);
       return;
     }
 
@@ -111,7 +149,6 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
         method: 'POST',
         body: formData,
       });
-
 
       if (!response.ok) {
         let errorDetails = response.statusText;
@@ -137,63 +174,19 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
           throw new Error(`Cloudinary upload returned non-JSON response. Raw response: ${responseText}`);
       }
 
-      console.log("Processing Cloudinary successful response.");
-      console.log("fileData from Cloudinary:", fileData);
-      console.log("selectedFile object:", selectedFile);
-
       const fileUrl = fileData.secure_url; // Use secure_url for HTTPS
       const fileName = fileData.original_filename || selectedFile.name;
-      console.log("Determined fileName:", fileName);
-
-      // Cloudinary provides a public_id, you can use this or generate your own fileId
       const fileId = fileData.public_id; // Using Cloudinary's public_id as fileId
 
-      // Store file metadata in database
-      const dbResponse = await fetch('/api/files', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: fileUrl,
-          name: fileName,
-          userId,
-          fileId: fileId, // Store Cloudinary's public_id as a reference
-        }),
-      });
-
-      if (!dbResponse.ok) {
-        let dbErrorData = { message: dbResponse.statusText, details: '' };
-        try {
-          dbErrorData = await dbResponse.json();
-        } catch (e) {
-          console.error("Failed to parse error response:", e);
-          // Try to get the raw text response if JSON parsing fails
-          try {
-            const rawText = await dbResponse.text();
-            dbErrorData.details = rawText;
-          } catch (textError) {
-            console.error("Failed to get raw response text:", textError);
-          }
-        }
-        console.error("Failed to store file metadata:", dbResponse.status, dbErrorData);
-        throw new Error(`Failed to store file metadata: ${dbErrorData.message || dbResponse.statusText} ${dbErrorData.details ? `(${dbErrorData.details})` : ''}`);
-      }
-
-      const dbFileData = await dbResponse.json();
-      console.log("File metadata stored:", dbFileData);
-
-      // Send message with file details
-      // Use the database-generated id from the File model for the message's fileId reference
-      // This ensures the Message model correctly references the File model's id field
-      sendMessage({ fileUrl, fileName, fileId: dbFileData.id });
+      // Send message with file details directly without storing in database
+      sendMessage({ fileUrl, fileName, fileId });
       console.log("File chat message sent.");
 
     } catch (error: any) {
       console.error("File upload process failed:", error);
-      // Create a more user-friendly error message
-      const errorMessage = error.message || 'Unknown error occurred';
-      alert(`File upload failed: ${errorMessage}`);
+      alert(`File upload failed: ${error.message || 'Unknown error occurred'}`);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -253,7 +246,7 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
         )}
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 bg-zinc-900/70 pb-16 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 bg-zinc-900/70 space-y-4">
         {isDragging && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none rounded-lg border-2 border-dashed border-blue-400/50">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-blue-400 mb-2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -321,11 +314,17 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
       
       <form 
-        className="flex flex-col gap-3 p-4 border-t border-zinc-800/50 bg-zinc-950/70 backdrop-blur-sm sticky bottom-0 z-50" 
-        onSubmit={e => { e.preventDefault(); if (input.trim()) sendMessage({ text: input }); }}
+        className="flex flex-col gap-3 p-4 border-t border-zinc-800/50 bg-zinc-950/70 backdrop-blur-sm sticky bottom-0 z-10" 
+        onSubmit={e => { 
+          e.preventDefault(); 
+          if (input.trim()) {
+            sendMessage({ text: input });
+          }
+        }}
       >
         <div className="relative">
           <input
@@ -336,7 +335,7 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
           />
           <button
             type="submit"
-            disabled={!input.trim()}
+            disabled={!input.trim() || isUploading}
             className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -348,19 +347,32 @@ export default function ChatSidebar({ roomId, onClose, className }: ChatSidebarP
         
         <div className="flex justify-between items-center">
           <label
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-200 cursor-pointer text-sm font-medium transition-colors border border-zinc-700/30"
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-200 cursor-pointer text-sm font-medium transition-colors border border-zinc-700/30 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
+            {isUploading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Uploading...</span>
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span>Attach File</span>
+              </>
+            )}
             <input
               type="file"
               onChange={handleFile}
+              disabled={isUploading}
               className="hidden"
             />
-            <span>Attach File</span>
           </label>
           
           <p className="text-xs text-zinc-500">Drag & drop files here</p>
