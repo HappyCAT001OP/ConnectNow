@@ -160,7 +160,7 @@ const MeetingRoom = () => {
                 <CodeShare roomId={roomId} />
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center relative min-h-0 min-w-0">
+              <div className="flex-1 flex items-center justify-center relative min-h-0 min-w-0 p-0"> // remove centering and padding
                 {activeTab === 'video' && <CallLayout />}
                 {activeTab === 'whiteboard' && <Whiteboard roomId={roomId} />}
               </div>
