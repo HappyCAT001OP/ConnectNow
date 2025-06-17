@@ -170,7 +170,7 @@ const MeetingRoom = () => {
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
               <MeetingDetailsPanel
-                meetingId={meetingId}
+                meetingId={roomId}
                 onClose={() => setShowDetails(false)}
                 className="fixed top-8 right-8 z-40"
               />
@@ -184,7 +184,7 @@ const MeetingRoom = () => {
             )}
             {showChat && (
               <ChatSidebar
-                meetingId={meetingId}
+                meetingId={roomId}
                 onClose={() => setShowChat(false)}
                 className="fixed top-0 right-0 h-full z-50"
               />
@@ -255,7 +255,7 @@ const MeetingRoom = () => {
         {/* Chat Sidebar - Positioned absolutely to avoid overlap */}
         {showChat && (
           <div className="absolute right-0 top-0 h-full w-[340px] transition-all duration-300 z-30">
-            <ChatSidebar />
+            <ChatSidebar meetingId={roomId} />
             <button
               onClick={() => setShowChat(false)}
               className="absolute top-4 left-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"

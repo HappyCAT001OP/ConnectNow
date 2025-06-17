@@ -34,39 +34,56 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
     if (!roomId) return;
     
     // Initialize Yjs document
-    if (!ydocRef.current) {
-      ydocRef.current = new Y.Doc();
-    }
+    const ydoc = new Y.Doc();
+    ydocRef.current = ydoc;
     
-    // Initialize WebSocket provider
-    if (!providerRef.current) {
-      providerRef.current = new WebsocketProvider(
-        process.env.NEXT_PUBLIC_YJS_URL!, 
-        roomId + '-whiteboard', 
-        ydocRef.current!
-      );
+    // Initialize WebSocket provider with proper error handling
+    try {
+      const wsUrl = process.env.NEXT_PUBLIC_YJS_URL || 'ws://localhost:1234';
+      const roomName = `${roomId}-whiteboard`;
       
-      // Add awareness information
-      providerRef.current.awareness.setLocalStateField('user', {
-        id: userId,
-        name: user?.firstName || 'Anonymous',
-        color: getRandomColor(userId),
+      console.log(`Connecting to YJS server at ${wsUrl} for room ${roomName}`);
+      
+      const provider = new WebsocketProvider(wsUrl, roomName, ydoc, {
+        connect: true,
+        awareness: {
+          // Add user awareness information
+          user: {
+            id: userId,
+            name: user?.firstName || 'Anonymous',
+            color: getRandomColor(userId),
+          }
+        }
       });
-    }
-    
-    // Initialize the maps
-    if (ydocRef.current) {
-      // Map for tldraw state
-      if (!ymapRef.current) {
-        ymapRef.current = ydocRef.current.getMap('tldraw');
-      }
+      
+      providerRef.current = provider;
+      
+      // Handle connection status
+      provider.on('status', (event: { status: string }) => {
+        console.log('YJS connection status:', event.status);
+        if (event.status === 'connected') {
+          console.log('Connected to YJS server');
+        }
+      });
+      
+      // Handle connection errors
+      provider.on('connection-error', (error: Error) => {
+        console.error('YJS connection error:', error);
+      });
+      
+      // Initialize the maps
+      const tldrawMap = ydoc.getMap('tldraw');
+      ymapRef.current = tldrawMap;
       
       // Map for permissions
-      const permissionsMap = ydocRef.current.getMap('permissions');
+      const permissionsMap = ydoc.getMap('permissions');
       
       // Listen for whiteboard state changes
       const updateTldrawState = () => {
-        setTldrawState(ymapRef.current?.get('state') || null);
+        const state = tldrawMap.get('state');
+        if (state) {
+          setTldrawState(state);
+        }
       };
       
       // Listen for permission changes
@@ -75,29 +92,40 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
         setUserPermissions(permissionsMap.get('userPermissions') ?? {});
       };
       
-      if (ymapRef.current) {
-        ymapRef.current.observeDeep(updateTldrawState);
-        updateTldrawState();
-      }
+      // Set up observers
+      tldrawMap.observe(updateTldrawState);
+      permissionsMap.observe(updatePermissions);
       
-      permissionsMap.observeDeep(updatePermissions);
+      // Initial state update
+      updateTldrawState();
       updatePermissions();
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error setting up YJS:', error);
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
     
     // Cleanup
     return () => {
-      if (providerRef.current) {
-        providerRef.current.destroy();
-        providerRef.current = null;
-      }
-      if (ydocRef.current) {
-        ydocRef.current.destroy();
-        ydocRef.current = null;
-      }
-      if (ymapRef.current) {
-        ymapRef.current.unobserveDeep(() => {});
+      try {
+        if (ymapRef.current) {
+          // Properly remove observers
+          ymapRef.current.unobserve();
+        }
+        
+        if (providerRef.current) {
+          providerRef.current.disconnect();
+          providerRef.current.destroy();
+          providerRef.current = null;
+        }
+        
+        if (ydocRef.current) {
+          ydocRef.current.destroy();
+          ydocRef.current = null;
+        }
+      } catch (error) {
+        console.error('Error during cleanup:', error);
       }
     };
   }, [roomId, userId, user?.firstName]);
@@ -126,22 +154,32 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
 
   // Handler to sync Tldraw state to yjs
   const handleTldrawChange = (state: any) => {
-    if (ymapRef.current && canEdit) {
+    if (!ymapRef.current || !canEdit) return;
+    
+    try {
       ymapRef.current.set('state', state);
+    } catch (error) {
+      console.error('Error updating Tldraw state:', error);
     }
   };
   
   // Toggle permissions for all users
   const toggleAllCanEdit = () => {
-    if (ydocRef.current && isHost) {
+    if (!ydocRef.current || !isHost) return;
+    
+    try {
       const permissionsMap = ydocRef.current.getMap('permissions');
       permissionsMap.set('allCanEdit', !allCanEdit);
+    } catch (error) {
+      console.error('Error toggling all permissions:', error);
     }
   };
   
   // Toggle permission for a specific user
   const toggleUserPermission = (participantId: string) => {
-    if (ydocRef.current && isHost) {
+    if (!ydocRef.current || !isHost) return;
+    
+    try {
       const permissionsMap = ydocRef.current.getMap('permissions');
       const currentPerms = permissionsMap.get('userPermissions') || {};
       const updatedPerms = { 
@@ -149,6 +187,8 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
         [participantId]: !currentPerms[participantId] 
       };
       permissionsMap.set('userPermissions', updatedPerms);
+    } catch (error) {
+      console.error('Error toggling user permission:', error);
     }
   };
 
