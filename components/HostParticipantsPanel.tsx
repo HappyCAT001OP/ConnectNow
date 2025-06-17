@@ -12,63 +12,7 @@ interface Participant {
 
 interface HostParticipantsPanelProps {
   roomId: string;
-  [01:25:24.172] Running build in Washington, D.C., USA (East) – iad1
-  [01:25:24.181] Build machine configuration: 2 cores, 8 GB
-  [01:25:24.268] Cloning github.com/HappyCAT001OP/ConnectNow (Branch: ui-improvements, Commit: 0c8a8d5)
-  [01:25:27.016] Warning: Failed to fetch one or more git submodules
-  [01:25:27.020] Cloning completed: 2.751s
-  [01:25:30.673] Restored build cache from previous deployment (F4GUCmeRC6istkyho47MhoappKJK)
-  [01:25:31.649] Running "vercel build"
-  [01:25:32.102] Vercel CLI 43.1.0
-  [01:25:32.275] WARN! Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply. Learn More: https://vercel.link/unused-build-settings
-  [01:25:32.433] Installing dependencies...
-  [01:25:34.765] 
-  [01:25:34.766] > VIDEOMEET@0.1.0 postinstall
-  [01:25:34.766] > prisma generate
-  [01:25:34.766] 
-  [01:25:35.585] Prisma schema loaded from prisma/schema.prisma
-  [01:25:35.765] 
-  [01:25:35.766] ✔ Generated Prisma Client (v6.9.0) to ./node_modules/@prisma/client in 90ms
-  [01:25:35.766] 
-  [01:25:35.766] Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-  [01:25:35.766] 
-  [01:25:35.766] Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
-  [01:25:35.766] 
-  [01:25:35.803] 
-  [01:25:35.804] up to date in 3s
-  [01:25:35.804] 
-  [01:25:35.804] 239 packages are looking for funding
-  [01:25:35.804]   run `npm fund` for details
-  [01:25:35.850] Detected Next.js version: 14.1.3
-  [01:25:35.862] Running "npm run build"
-  [01:25:36.135] 
-  [01:25:36.136] > VIDEOMEET@0.1.0 build
-  [01:25:36.136] > next build
-  [01:25:36.136] 
-  [01:25:36.764] Attention: Next.js now collects completely anonymous telemetry regarding usage.
-  [01:25:36.765] This information is used to shape Next.js' roadmap and prioritize features.
-  [01:25:36.766] You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
-  [01:25:36.766] https://nextjs.org/telemetry
-  [01:25:36.766] 
-  [01:25:36.849]    ▲ Next.js 14.1.3
-  [01:25:36.850] 
-  [01:25:36.920]    Creating an optimized production build ...
-  [01:26:21.525] Failed to compile.
-  [01:26:21.525] 
-  [01:26:21.526] ./components/ChatSidebar.tsx
-  [01:26:21.526] Module not found: Can't resolve './ui/avatar'
-  [01:26:21.526] 
-  [01:26:21.526] https://nextjs.org/docs/messages/module-not-found
-  [01:26:21.526] 
-  [01:26:21.527] Import trace for requested module:
-  [01:26:21.527] ./components/MeetingRoom.tsx
-  [01:26:21.527] ./app/(root)/meeting/[id]/page.tsx
-  [01:26:21.527] 
-  [01:26:21.527] 
-  [01:26:21.527] > Build failed because of webpack errors
-  [01:26:21.682] Error: Command "npm run build" exited with 1
-  [01:26:22.150] 
-  [01:26:25.404] Exiting build container  onClose?: () => void;
+  onClose?: () => void;
   className?: string;
 }
 
