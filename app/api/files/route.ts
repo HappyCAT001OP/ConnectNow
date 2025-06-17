@@ -9,19 +9,19 @@ export async function POST(req: NextRequest) {
     if (!url || !name || !userId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+    // Ensure user exists before creating file
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: { id: userId, username: userId, email: `${userId}@example.com` },
+    });
     const file = await prisma.file.create({
       data: {
         url,
         name,
         userId,
-        fileId: fileId || undefined, // Store Cloudinary's public_id as a reference
-        user: {
-          connectOrCreate: {
-            where: { id: userId },
-            create: { id: userId, username: userId, email: `${userId}@example.com` },
-          },
-        },
-      },
+        fileId: fileId || undefined // Store Cloudinary's public_id as a reference
+      }
     });
     return NextResponse.json(file);
 
