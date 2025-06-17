@@ -3,50 +3,90 @@ import '@tldraw/tldraw/tldraw.css';
 import { useEffect, useRef, useState } from 'react';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
-import { useUser } from '@clerk/nextjs';
-import { useCall } from '@stream-io/video-react-sdk';
+import { useUser } from "@clerk/nextjs";
+import { useCall } from "@stream-io/video-react-sdk";
 
 type WhiteboardProps = {
   roomId: string;
 };
 
+type Participant = {
+  userId: string;
+  name: string;
+  username: string;
+};
+
 const Whiteboard = ({ roomId }: WhiteboardProps) => {
+  const { user } = useUser();
+  const call = useCall();
   const [isLoading, setIsLoading] = useState(true);
-  const [canEdit, setCanEdit] = useState(true);
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const ymapRef = useRef<Y.Map<any> | null>(null);
-  const { user } = useUser();
-  const call = useCall();
-  const userId = user?.id || 'unknown';
-
-  useEffect(() => {
-    // Simulate loading time for the whiteboard
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
+  const [tldrawState, setTldrawState] = useState<any>(null);
+  const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
+  const [allCanEdit, setAllCanEdit] = useState(true);
+  
+  const userId = user?.id || "unknown";
+  const hostId = call?.state?.createdBy?.id;
 
   useEffect(() => {
     if (!roomId) return;
+    
+    // Initialize Yjs document
     if (!ydocRef.current) {
       ydocRef.current = new Y.Doc();
-      ymapRef.current = ydocRef.current.getMap('permissions');
     }
+    
+    // Initialize WebSocket provider
     if (!providerRef.current) {
-      providerRef.current = new WebsocketProvider(process.env.NEXT_PUBLIC_YJS_URL!, roomId + '-whiteboard', ydocRef.current!);
+      providerRef.current = new WebsocketProvider(
+        process.env.NEXT_PUBLIC_YJS_URL!, 
+        roomId + '-whiteboard', 
+        ydocRef.current!
+      );
+      
+      // Add awareness information
+      providerRef.current.awareness.setLocalStateField('user', {
+        id: userId,
+        name: user?.firstName || 'Anonymous',
+        color: getRandomColor(userId),
+      });
     }
-    // Listen for permission changes
-    const updatePermissions = () => {
-      const allCanEdit = ymapRef.current?.get('allCanEdit') ?? true;
-      const userPermissions = ymapRef.current?.get('userPermissions') ?? {};
-      setCanEdit(allCanEdit || !!userPermissions[userId]);
-    };
-    if (ymapRef.current) {
-      ymapRef.current.observeDeep(updatePermissions);
+    
+    // Initialize the maps
+    if (ydocRef.current) {
+      // Map for tldraw state
+      if (!ymapRef.current) {
+        ymapRef.current = ydocRef.current.getMap('tldraw');
+      }
+      
+      // Map for permissions
+      const permissionsMap = ydocRef.current.getMap('permissions');
+      
+      // Listen for whiteboard state changes
+      const updateTldrawState = () => {
+        setTldrawState(ymapRef.current?.get('state') || null);
+      };
+      
+      // Listen for permission changes
+      const updatePermissions = () => {
+        setAllCanEdit(permissionsMap.get('allCanEdit') ?? true);
+        setUserPermissions(permissionsMap.get('userPermissions') ?? {});
+      };
+      
+      if (ymapRef.current) {
+        ymapRef.current.observeDeep(updateTldrawState);
+        updateTldrawState();
+      }
+      
+      permissionsMap.observeDeep(updatePermissions);
       updatePermissions();
     }
+    
+    setIsLoading(false);
+    
+    // Cleanup
     return () => {
       if (providerRef.current) {
         providerRef.current.destroy();
@@ -57,10 +97,60 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
         ydocRef.current = null;
       }
       if (ymapRef.current) {
-        ymapRef.current.unobserveDeep(updatePermissions);
+        ymapRef.current.unobserveDeep(() => {});
       }
     };
-  }, [roomId, userId]);
+  }, [roomId, userId, user?.firstName]);
+  
+  // Generate a random color based on user ID for consistent colors
+  const getRandomColor = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash % 360);
+    return `hsl(${hue}, 95%, 60%)`;
+  };
+
+  // Get participants from call.state.members
+  const participants = call
+    ? Object.values(call.state.members).map((m: any) => ({
+        userId: m.user.id,
+        name: m.user.name,
+        username: m.user.name,
+      }))
+    : [];
+
+  const isHost = userId === hostId;
+  const canEdit = allCanEdit || isHost || userPermissions[userId];
+
+  // Handler to sync Tldraw state to yjs
+  const handleTldrawChange = (state: any) => {
+    if (ymapRef.current && canEdit) {
+      ymapRef.current.set('state', state);
+    }
+  };
+  
+  // Toggle permissions for all users
+  const toggleAllCanEdit = () => {
+    if (ydocRef.current && isHost) {
+      const permissionsMap = ydocRef.current.getMap('permissions');
+      permissionsMap.set('allCanEdit', !allCanEdit);
+    }
+  };
+  
+  // Toggle permission for a specific user
+  const toggleUserPermission = (participantId: string) => {
+    if (ydocRef.current && isHost) {
+      const permissionsMap = ydocRef.current.getMap('permissions');
+      const currentPerms = permissionsMap.get('userPermissions') || {};
+      const updatedPerms = { 
+        ...currentPerms, 
+        [participantId]: !currentPerms[participantId] 
+      };
+      permissionsMap.set('userPermissions', updatedPerms);
+    }
+  };
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-center p-4">
@@ -76,10 +166,56 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
             </svg>
             <h2 className="text-sm font-medium text-zinc-200">Collaborative Whiteboard</h2>
           </div>
-          <div className="text-xs bg-zinc-800/70 text-zinc-400 px-2 py-1 rounded-full border border-zinc-700/30">
-            Room: {roomId.substring(0, 8)}...
+          <div className="flex items-center gap-4">
+            {isHost && (
+              <span className="text-blue-400 text-xs bg-zinc-800 rounded px-2 ml-2 border border-blue-400 font-bold tracking-wide">Host</span>
+            )}
+            {!canEdit && <span className="text-red-400 text-xs bg-zinc-800 rounded px-2 border border-red-400 font-semibold">View Only</span>}
+            <div className="text-xs bg-zinc-800/70 text-zinc-400 px-2 py-1 rounded-full border border-zinc-700/30">
+              Room: {roomId.substring(0, 8)}...
+            </div>
           </div>
         </div>
+        
+        {/* Permissions Panel (for host only) */}
+        {isHost && (
+          <div className="bg-zinc-800 border-b border-zinc-700/50 px-4 py-2">
+            <label className="mb-2 block text-blue-400 font-medium text-sm">
+              <input 
+                type="checkbox" 
+                checked={allCanEdit} 
+                onChange={toggleAllCanEdit} 
+                className="mr-2" 
+              /> 
+              All participants can edit the whiteboard
+            </label>
+            
+            {!allCanEdit && participants.length > 0 && (
+              <div className="mt-2 mb-1 grid grid-cols-2 gap-2">
+                {participants.map((p) => (
+                  <div key={p.userId} className="flex items-center mb-2 bg-zinc-700/30 rounded px-2 py-1">
+                    <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-xs mr-2">
+                      {p.name?.[0]?.toUpperCase() || p.username?.[0]?.toUpperCase() || "U"}
+                    </div>
+                    <span className="mr-2 font-medium text-xs text-zinc-300 truncate">{p.name || p.username || ""}</span>
+                    {p.userId !== userId && (
+                      <label className="ml-auto text-xs text-white">
+                        <input
+                          type="checkbox"
+                          checked={!!userPermissions[p.userId]}
+                          onChange={() => toggleUserPermission(p.userId)}
+                          className="mr-1"
+                        />
+                        Edit
+                      </label>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* Whiteboard Container */}
         <div className="flex-1 bg-white">
           {isLoading ? (
@@ -91,10 +227,8 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
             </div>
           ) : (
             <Tldraw
-              // @ts-ignore
-              yjsDoc={ydocRef.current}
-              // @ts-ignore
-              provider={providerRef.current}
+              snapshot={tldrawState}
+              onChange={handleTldrawChange}
               readOnly={!canEdit}
             />
           )}
@@ -102,7 +236,7 @@ const Whiteboard = ({ roomId }: WhiteboardProps) => {
       </div>
       <div className="mt-4 text-center text-xs text-zinc-500">
         <p>Draw, sketch, and collaborate in real-time with other participants</p>
-        {!canEdit && <p className="text-red-500">You have view-only access. Ask the host for edit permissions.</p>}
+        {!canEdit && <p className="text-amber-500 mt-1">You are in view-only mode. Only the host can enable editing for you.</p>}
       </div>
     </div>
   );

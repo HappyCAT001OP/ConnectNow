@@ -100,7 +100,7 @@ const MeetingRoom = () => {
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* Main Content Area */}
-        <div className={cn("flex flex-1 flex-col transition-all duration-300 w-full", { 'mr-[340px]': showChat })}> // add margin-right when chat is open
+        <div className="flex flex-1 flex-col transition-all duration-300 w-full">
           {/* Tab Navigation - Auto-hide with controls */}
           <div className={cn("flex justify-between items-center px-6 py-3 bg-zinc-900/60 border-b border-zinc-800/50 transition-opacity duration-300", {
             'opacity-0 pointer-events-none': !showControls,
@@ -154,13 +154,15 @@ const MeetingRoom = () => {
           </div>
           
           {/* Main Content */}
-          <div className={cn("relative flex-1 flex items-center justify-center min-h-0 min-w-0")}> // ensure full area is used for video/placeholder
+          <div className={cn("relative flex size-full items-center justify-center", {
+            'pr-[340px]': showChat, // Add padding when chat is open to prevent overlap
+          })}>  
             {activeTab === 'codeshare' ? (
-              <div className="flex-1 flex items-center justify-center relative min-h-0 min-w-0">
+              <div className="flex size-full items-center relative">
                 <CodeShare roomId={roomId} />
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center relative min-h-0 min-w-0 p-0"> // remove centering and padding
+              <div className="flex size-full items-center relative">
                 {activeTab === 'video' && <CallLayout />}
                 {activeTab === 'whiteboard' && <Whiteboard roomId={roomId} />}
               </div>
@@ -168,7 +170,7 @@ const MeetingRoom = () => {
             {/* Meeting Details Panel (Floating Card) */}
             {showDetails && (
               <MeetingDetailsPanel
-                roomId={roomId}
+                meetingId={meetingId}
                 onClose={() => setShowDetails(false)}
                 className="fixed top-8 right-8 z-40"
               />
@@ -182,17 +184,16 @@ const MeetingRoom = () => {
             )}
             {showChat && (
               <ChatSidebar
-                roomId={roomId}
+                meetingId={meetingId}
                 onClose={() => setShowChat(false)}
-                className="fixed top-0 right-0 h-full z-50 w-[340px]"
+                className="fixed top-0 right-0 h-full z-50"
               />
             )}
+            <EndCallButton className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50" />
           </div>
           
           {/* Control Bar - Auto-hide */}
-          <div className={cn("fixed bottom-0 left-0 right-0 flex items-center px-6 py-4 z-40 transition-transform duration-300", {
-            'justify-center': !showChat,
-            'justify-start ml-[24px]': showChat,
+          <div className={cn("fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-4 z-40 transition-transform duration-300", {
             'translate-y-24': !showControls,
             'translate-y-0': showControls
           })}>
@@ -253,7 +254,16 @@ const MeetingRoom = () => {
         
         {/* Chat Sidebar - Positioned absolutely to avoid overlap */}
         {showChat && (
-          <ChatSidebar roomId={roomId} onClose={() => setShowChat(false)} className="fixed top-0 right-0 h-full z-50" />
+          <div className="absolute right-0 top-0 h-full w-[340px] transition-all duration-300 z-30">
+            <ChatSidebar />
+            <button
+              onClick={() => setShowChat(false)}
+              className="absolute top-4 left-4 z-50 bg-zinc-800/80 text-zinc-200 px-3 py-1.5 rounded-full border border-zinc-700/50 hover:bg-zinc-700/80 transition-colors flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Close Chat
+            </button>
+          </div>
         )}
       </div>
     </div>

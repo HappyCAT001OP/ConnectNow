@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
         name,
         userId,
         fileId: fileId || undefined // Store Cloudinary's public_id as a reference
-      }
+      },
     });
     return NextResponse.json(file);
 
